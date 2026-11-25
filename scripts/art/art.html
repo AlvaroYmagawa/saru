@@ -12,29 +12,45 @@ html, body { margin: 0; background: transparent; }
   background: radial-gradient(120% 120% at 30% 20%, #f3e7d3 0%, #e8d8bd 60%, #dcc6a4 100%);
   box-shadow: inset 0 0 0 2px #3f1f1214, 0 24px 40px #3f1f122e; display: grid; place-items: center; }
 .tile .mark { width: 700px; height: 700px; }
-/* README banners. */
-.banner { width: 1600px; height: 520px; display: flex; align-items: center; gap: 64px; padding: 0 120px; box-sizing: border-box; font-family: ZenKaku; }
-.banner.light { background: #ecdfca; color: #3f1f12; } .banner.dark { background: #1b130e; color: #f1e4d0; --m-dark: #c98a55; --m-light: #3a2216; }
-.banner .mark { width: 330px; height: 330px; flex: none; }
-.banner h1 { font: 700 124px/1 ZenKaku; margin: 0; letter-spacing: .01em; }
-.banner h1 small { font: 400 54px Yuji; margin-left: 24px; color: #8c4a27; }
-.banner.dark h1 small { color: #d8b48a; }
-.banner p { font-size: 38px; margin: 26px 0 0; opacity: .72; }
-.banner .vert { writing-mode: vertical-rl; font: 400 27px Yuji; letter-spacing: .16em; line-height: 1.7; margin-left: auto; opacity: .45; }
+/* README banners: the painted head on a paper disc, the name, the promise, and the three monkeys. */
+.banner { width: 1600px; height: 600px; display: flex; align-items: center; gap: 72px; padding: 0 130px; box-sizing: border-box; font-family: ZenKaku; position: relative; }
+.banner.light { background: radial-gradient(120% 140% at 10% 0%, #f6ecdc 0%, #ecdcc2 55%, #dfc9a6 100%); color: #3f1f12; }
+.banner.dark { background: radial-gradient(120% 140% at 10% 0%, #3a2214 0%, #21150d 55%, #140c07 100%); color: #f1e4d0; }
+.banner::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(circle at 20% 30%, #3f1f120c 0 1.2px, transparent 2px), radial-gradient(circle at 70% 80%, #3f1f1209 0 1.2px, transparent 2px);
+  background-size: 9px 11px, 13px 15px; }
+.banner .disc { width: 380px; height: 380px; border-radius: 50%; flex: none; display: grid; place-items: center; background: radial-gradient(circle at 35% 30%, #f8efe1, #e6d2b2); box-shadow: 0 30px 60px #3f1f1240, inset 0 0 0 3px #a85d2c33; }
+.banner.dark .disc { background: radial-gradient(circle at 35% 30%, #3a2618, #24170e); box-shadow: 0 30px 60px #00000080, inset 0 0 0 3px #e0b88433; --m-dark: #c98a55; --m-light: #3a2216; }
+.banner .disc .mark { width: 300px; height: 300px; }
+.banner h1 { font: 700 150px/1 ZenKaku; margin: 0; letter-spacing: .01em; }
+.banner h1 small { font: 400 64px Yuji; margin-left: 26px; color: #a85d2c; vertical-align: 18px; }
+.banner.dark h1 small { color: #e0b884; }
+.banner p { font-size: 42px; margin: 28px 0 0; opacity: .78; }
+.banner .monkeys { display: flex; gap: 14px; margin-top: 36px; }
+.banner .monkeys span { font: 400 26px/1 ZenKaku; padding: 12px 18px 12px 14px; border-radius: 99px; background: #3f1f1210; display: flex; align-items: center; gap: 10px; }
+.banner.dark .monkeys span { background: #ffffff10; }
+.banner .monkeys b { font: 400 34px/1 Yuji; color: #a85d2c; }
+.banner.dark .monkeys b { color: #e0b884; }
 /* Menu-bar glyph: a clean silhouette; the face is turned into transparency by render.cjs. */
 .tray { width: 64px; height: 64px; --m-dark: #000; --m-light: #fff; --f-brush: none; --f-soft: none; }
 </style></head>
 <body>
 <div id="icon" class="stage icon"><div class="tile"><div class="mark"></div></div></div>
 <div id="banner-light" class="stage banner light">
-  <div class="mark"></div>
-  <div><h1>Saru<small>猿</small></h1><p>Write it your way. Send it in theirs.</p></div>
-  <div class="vert">見ざる 聞かざる 言わざる</div>
+  <div class="disc"><div class="mark"></div></div>
+  <div>
+    <h1>Saru<small>猿</small></h1>
+    <p>Write it your way. Send it in theirs.</p>
+    <div class="monkeys"><span><b>見</b>sees where it's going</span><span><b>聞</b>knows who reads it</span><span><b>言</b>says it cleanly</span></div>
+  </div>
 </div>
 <div id="banner-dark" class="stage banner dark">
-  <div class="mark"></div>
-  <div><h1>Saru<small>猿</small></h1><p>Write it your way. Send it in theirs.</p></div>
-  <div class="vert">見ざる 聞かざる 言わざる</div>
+  <div class="disc"><div class="mark"></div></div>
+  <div>
+    <h1>Saru<small>猿</small></h1>
+    <p>Write it your way. Send it in theirs.</p>
+    <div class="monkeys"><span><b>見</b>sees where it's going</span><span><b>聞</b>knows who reads it</span><span><b>言</b>says it cleanly</span></div>
+  </div>
 </div>
 <div id="tray" class="stage tray mark"></div>
 </body></html>

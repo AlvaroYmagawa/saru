@@ -1,0 +1,104 @@
+<!doctype html>
+<html data-theme="light"><head><meta charset="utf-8">
+<!-- The README demo: a scripted scene drawn with the app's own stylesheet. render.cjs (demo mode)
+     calls window.render(t) for each frame and stitches them into docs/art/demo.gif. -->
+<link rel="stylesheet" href="../../dist/renderer/styles.css">
+<style>
+html, body { margin: 0; background: transparent; }
+body.demo { --ground: #e9dac2; color-scheme: light; }
+#stage { width: 1200px; height: 720px; position: relative; overflow: hidden; font-family: var(--sans);
+  background: radial-gradient(120% 140% at 20% 0%, #8c4a27 0%, #4a2414 55%, #2b160c 100%); }
+/* A generic chat app, not any real product. */
+.chat { position: absolute; left: 70px; top: 60px; width: 1060px; height: 560px; border-radius: 14px; background: #fbf8f3; box-shadow: 0 30px 80px #00000066; overflow: hidden; display: grid; grid-template-columns: 220px 1fr; }
+.chat .side { background: #f1e9de; padding: 22px 16px; display: grid; align-content: start; gap: 10px; color: #6b5444; font-size: 15px; }
+.chat .side .me { font-weight: 700; color: #3f1f12; margin-bottom: 10px; }
+.chat .side .on { background: #e2d3bd; border-radius: 8px; padding: 6px 10px; color: #3f1f12; font-weight: 700; }
+.chat .side div { padding: 6px 10px; }
+.chat .main { display: grid; grid-template-rows: auto 1fr auto; }
+.chat .head { padding: 18px 24px; border-bottom: 1px solid #eadfce; font-weight: 700; font-size: 18px; color: #3f1f12; }
+.chat .msgs { padding: 22px 24px; display: grid; align-content: end; gap: 14px; }
+.msg { display: grid; grid-template-columns: 40px 1fr; gap: 12px; font-size: 16px; color: #3f1f12; }
+.msg .av { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; font-weight: 700; font-size: 14px; background: #d8c3a5; color: #5e3b28; }
+.msg b { display: block; font-size: 15px; }
+.composer { margin: 0 24px 24px; border: 1.5px solid #d9c8b0; border-radius: 12px; padding: 16px 18px; min-height: 64px; font-size: 17px; color: #3f1f12; background: #fff; white-space: pre-wrap; }
+.caret { display: inline-block; width: 2px; height: 20px; background: #3f1f12; vertical-align: -3px; margin-left: 1px; }
+.keys { position: absolute; left: 50%; top: 300px; transform: translateX(-50%); display: flex; gap: 10px; opacity: 0; }
+.keys span { font: 700 40px/1 var(--sans); color: #fff; background: #3f1f12e6; border-radius: 14px; padding: 18px 22px; box-shadow: 0 10px 30px #00000055; }
+.panel-wrap { position: absolute; left: 50%; top: 92px; width: 640px; transform: translateX(-50%); opacity: 0; }
+.panel-wrap .panel-card { margin: 0; }
+.caption { position: absolute; left: 0; right: 0; bottom: 0; height: 100px; display: grid; place-items: center; }
+.caption div { font: 700 26px/1 var(--sans); color: #f3e9d8; letter-spacing: .01em; }
+.caption small { display: block; font: 400 17px/1 var(--sans); color: #d8b48a; margin-top: 10px; text-align: center; }
+</style></head>
+<body class="demo">
+<div id="stage">
+  <div class="chat">
+    <div class="side"><div class="me">Acme</div><div># general</div><div># release</div><div class="on">Hana Mori</div><div>Bo Chen</div></div>
+    <div class="main">
+      <div class="head">Hana Mori</div>
+      <div class="msgs">
+        <div class="msg"><span class="av">HM</span><div><b>Hana Mori</b>Build looks good on my side. Can we ship this week?</div></div>
+      </div>
+      <div class="composer" id="composer"></div>
+    </div>
+  </div>
+  <div class="keys" id="keys"></div>
+  <div class="panel-wrap" id="panel">
+    <div class="panel-card">
+      <div class="panel-head">
+        <span class="panel-mark" id="pmark"><span class="mark"></span></span>
+        <div><div class="where">Slack DM · Hana Mori</div><div class="who" id="who"></div></div>
+        <span class="step" id="step"></span>
+      </div>
+      <div class="panel-body">
+        <div class="yours"><div class="label">Your draft</div><div class="text" id="yours"></div></div>
+        <div class="saru-version" id="version" style="display:none"><div class="label">Saru's version</div><div class="text" id="version-text"></div></div>
+      </div>
+      <div class="panel-foot">
+        <div class="field" style="color: var(--muted)">Ask for a change: shorter, warmer, add a thank-you…</div>
+        <div class="actions"><button class="btn quiet">Discard <kbd>esc</kbd></button><span class="spacer"></span><button class="btn primary" id="paste">Paste into Slack <kbd>⌘↵</kbd></button></div>
+      </div>
+    </div>
+  </div>
+  <div class="caption"><div id="cap"></div></div>
+</div>
+<script>
+const DRAFT = "oi hana, da pra mover o release pra segunda? kindly me avisa";
+const POLISHED = "Hi Hana,\n\nQuick one: could we move the release to Monday? Let me know if that works.\n\nThanks";
+const $ = (id) => document.getElementById(id);
+const ease = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3));
+function caption(title, sub) { $("cap").innerHTML = title + (sub ? "<small>" + sub + "</small>" : ""); }
+window.TOTAL = 12.5;
+window.render = function (t) {
+  const typed = Math.floor(Math.min(1, t / 2.6) * DRAFT.length);
+  const pasted = t >= 9.4;
+  $("composer").innerHTML = (pasted ? POLISHED : DRAFT.slice(0, typed)).replace(/</g, "&lt;") + (t < 2.9 || pasted ? '<span class="caret"></span>' : "");
+  // ⌥⌘P, then ⌘↵
+  const keys = $("keys");
+  if (t >= 2.9 && t < 3.6) { keys.innerHTML = "<span>⌥</span><span>⌘</span><span>P</span>"; keys.style.opacity = 1; }
+  else if (t >= 8.6 && t < 9.4) { keys.innerHTML = "<span>⌘</span><span>↵</span>"; keys.style.opacity = 1; }
+  else keys.style.opacity = 0;
+  // the panel
+  const p = $("panel");
+  const shown = t >= 3.5 && t < 9.4;
+  const k = shown ? ease((t - 3.5) / 0.35) : 0;
+  p.style.opacity = k;
+  p.style.transform = `translateX(-50%) translateY(${(1 - k) * 14}px)`;
+  $("yours").textContent = DRAFT;
+  const ready = t >= 5.6;
+  $("step").textContent = ready ? "Ready to paste" : t < 4.5 ? "Gathering the rules…" : "Writing it…";
+  $("pmark").className = "panel-mark" + (ready ? "" : " busy");
+  $("version").style.display = ready ? "" : "none";
+  $("version-text").textContent = POLISHED;
+  $("who").textContent = ready ? "for Hana Mori" : "";
+  $("paste").style.boxShadow = t >= 8.6 && t < 9.4 ? "0 0 0 4px #a85d2c55" : "";
+  // what's happening, in words
+  if (t < 2.9) caption("Write it your way", "in any language, in any app");
+  else if (t < 3.6) caption("Press ⌥⌘P");
+  else if (t < 5.6) caption("Saru reads where it's going", "and gathers what it knows about Hana");
+  else if (t < 8.6) caption("Saru's version, in Hana's register", "you approve every word");
+  else if (t < 9.4) caption("⌘↵ pastes it back");
+  else caption("Send it the way they read it");
+};
+</script>
+</body></html>

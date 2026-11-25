@@ -18,7 +18,8 @@
     "check": "tsc --noEmit && vitest run",
     "dist": "node scripts/build.mjs && electron-builder --mac --publish never",
     "saru": "node dist/cli.cjs",
-    "art": "electron scripts/art/render.cjs"
+    "art": "electron scripts/art/render.cjs",
+    "demo": "node scripts/build.mjs && electron scripts/art/demo.cjs"
   },
   "dependencies": {
     "zod": "4.6.7"
