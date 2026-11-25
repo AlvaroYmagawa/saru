@@ -94,6 +94,8 @@ You run inside the Saru app. Nobody can answer a question, and you have no tools
   - note: one short line only when the user must check something before sending (a best-guess
     match, nobody matched, the draft read very differently from the stored intimacy), else null.
     Never describe what you did (translating, shortening, applying rules).
+  - newPerson: when the message is addressed to one person who isn't in People, their name as
+    the window title or the greeting gives it (full name if shown, else first name); else null.
 `;
 
 export const POLISH_SCHEMA = {
@@ -102,7 +104,8 @@ export const POLISH_SCHEMA = {
     message: { type: "string" },
     recipient: { type: ["string", "null"] },
     note: { type: ["string", "null"] },
+    newPerson: { type: ["string", "null"] },
   },
-  required: ["message", "recipient", "note"],
+  required: ["message", "recipient", "note", "newPerson"],
   additionalProperties: false,
 } as const;

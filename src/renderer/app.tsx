@@ -362,10 +362,32 @@ function ChannelDetail({ channel, onDeleted }: { channel: Channel; onDeleted(): 
 
 function YouPage({ profile }: { profile: Profile }) {
   const toast = useToast();
+  const [tell, setTell] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [learning, setLearning] = useState<{ running: boolean; result?: string; error?: string }>({ running: false });
+  useEffect(() => saru.onLearning(setLearning), []);
   const save = async (patch: Partial<Profile>) => {
     const r = await saru.saveProfile({ ...profile, ...patch });
     if (!r.ok) toast.show(r.error, { bad: true });
   };
+  const submitTell = async () => {
+    const text = tell.trim();
+    if (!text || busy) return;
+    setBusy(true);
+    const r = await saru.tellProfile(text);
+    setBusy(false);
+    if (!r.ok) return toast.show(r.error, { bad: true });
+    setTell("");
+    const before = r.value.before;
+    toast.show(r.value.note ?? "Updated your profile.", { undo: async () => void (await saru.saveProfile(before)) });
+  };
+  const learn = async () => {
+    const r = await saru.learnStyle();
+    if (!r.ok) return;
+    const before = r.value.before;
+    toast.show(`Learned your style from ${r.value.read ?? "your"} Slack messages.`, { undo: async () => void (await saru.saveProfile(before)) });
+  };
+  const blank = !profile.about.trim() && profile.rules.length === 0;
   return (
     <main className="sheet">
       <div className="sheet-inner">
@@ -373,6 +395,35 @@ function YouPage({ profile }: { profile: Profile }) {
           <h1>{profile.name || "You"}</h1>
           <p>Saru writes in your voice. What's here applies to every message.</p>
         </div>
+        <section className="block" data-testid="learn">
+          <div className="learning banner info">
+            <span data-testid="learn-status">
+              {learning.running
+                ? "Reading your own Slack messages to learn how you write… (read-only: Saru never posts)"
+                : learning.error
+                  ? `Couldn't learn from Slack: ${learning.error}`
+                  : learning.result
+                    ? learning.result
+                    : blank
+                      ? "No profile yet. Saru can learn how you write from your own Slack messages."
+                      : "Learn again from your latest Slack messages to refresh your profile."}
+            </span>
+            <button className="btn" data-testid="learn-start" disabled={learning.running} onClick={() => void learn()}>
+              {learning.running ? "Learning…" : "Learn from Slack"}
+            </button>
+          </div>
+        </section>
+        <Block title="Tell Saru about you" hint="Change how you write, in a sentence">
+          <div className="adder">
+            <div className="row">
+              <input className="field" data-testid="you-tell" placeholder="I write to colleagues in British English and never use exclamation marks" value={tell} disabled={busy} onChange={(e) => setTell(e.target.value)} onKeyDown={(e) => e.key === "Enter" && void submitTell()} />
+              <button className="btn primary" data-testid="you-tell-submit" disabled={busy || !tell.trim()} onClick={() => void submitTell()}>{busy ? "Updating…" : "Tell"}</button>
+            </div>
+          </div>
+        </Block>
+        <Block title="How you write">
+          <AboutField value={profile.about} placeholder="Tech lead at a London software house. Dry, direct, warm where it counts." onSave={(about) => void save({ about })} />
+        </Block>
         <RulesEditor scope={{ type: "profile" }} rules={profile.rules} title="Your rules" hint="Rules for every message, such as “never use exclamation marks”." />
         <Block title="Your voice">
           <div className="grid">
@@ -380,9 +431,6 @@ function YouPage({ profile }: { profile: Profile }) {
             <TextField label="Native language" value={profile.nativeLanguage} placeholder="pt-BR" onSave={(v) => void save({ nativeLanguage: v.trim() })} />
             <TextField label="Saru writes in" value={profile.outputLanguage} placeholder="en-GB" testId="you-output" onSave={(v) => v.trim() && void save({ outputLanguage: v.trim() })} />
           </div>
-        </Block>
-        <Block title="About you">
-          <AboutField value={profile.about} placeholder="Tech lead at a London software house. Dry, direct, warm where it counts." onSave={(about) => void save({ about })} />
         </Block>
       </div>
     </main>

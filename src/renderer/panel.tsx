@@ -1,37 +1,65 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PanelState } from "../shared/api";
+import { Mark } from "./mark";
 
 const saru = window.saru;
 
-const MONKEYS = [
-  { id: "see", kanji: "見", name: "See", doing: "Reading the window…" },
-  { id: "hear", kanji: "聞", name: "Hear", doing: "Gathering the rules…" },
-  { id: "speak", kanji: "言", name: "Speak", doing: "Writing it…" },
-] as const;
-
-/** 見 聞 言: which monkeys are done, which one is working, and where it stopped on an error. */
-function Sanzaru({ s }: { s: PanelState }) {
-  const reached = s.stage ? MONKEYS.findIndex((m) => m.id === s.stage) : -1;
-  return (
-    <div className="sanzaru" data-testid="sanzaru" aria-hidden>
-      {MONKEYS.map((m, i) => {
-        let cls = "";
-        if (s.phase === "ready") cls = "done";
-        else if (s.phase === "error") cls = i <= reached ? "done" : i === reached + 1 ? "failed" : "";
-        else if (s.phase === "changing") cls = i < 2 ? "done" : "now";
-        else cls = i <= reached ? "done" : i === reached + 1 ? "now" : "";
-        return <span key={m.id} className={`monkey ${cls}`} title={m.name}>{m.kanji}</span>;
-      })}
-    </div>
-  );
-}
+const STEPS = { see: "Gathering the rules…", hear: "Writing it…", speak: "Ready to paste" } as const;
 
 function stepText(s: PanelState): string {
   if (s.phase === "ready") return "Ready to paste";
   if (s.phase === "error") return "Stopped";
   if (s.phase === "changing") return "Rewriting…";
-  const next = s.stage ? MONKEYS.findIndex((m) => m.id === s.stage) + 1 : 0;
-  return MONKEYS[Math.min(next, 2)]!.doing;
+  return s.stage ? STEPS[s.stage] : "Reading the window…";
+}
+
+/** Someone or somewhere Saru doesn't know yet: add it in one line, and the draft is rewritten. */
+function NewHere({ kind, name }: { kind: "person" | "channel"; name: string }) {
+  const [open, setOpen] = useState(false);
+  const [hint, setHint] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const add = async () => {
+    setBusy(true);
+    setError(undefined);
+    const r = await saru.addFromPanel(kind, name, hint);
+    setBusy(false);
+    if (!r.ok) setError(r.error);
+  };
+  return (
+    <div className="new-here" data-testid={`new-${kind}`}>
+      <div className="new-row">
+        <span><b>{name}</b> {kind === "person" ? "isn't in People yet." : "isn't in Channels yet."}</span>
+        {!open ? <button className="btn" data-testid={`new-${kind}-open`} onClick={() => setOpen(true)}>Add {kind === "person" ? "them" : "it"}</button> : null}
+      </div>
+      {open ? (
+        <div className="new-row">
+          <input
+            className="field"
+            autoFocus
+            data-testid={`new-${kind}-hint`}
+            disabled={busy}
+            placeholder={kind === "person" ? "Optional: who they are, how you write to them (client, keep it formal)" : "Optional: who reads it, how to write there"}
+            value={hint}
+            onChange={(e) => setHint(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.metaKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                void add();
+              }
+              if (e.key === "Escape") {
+                e.stopPropagation();
+                setOpen(false);
+              }
+            }}
+          />
+          <button className="btn primary" data-testid={`new-${kind}-add`} disabled={busy} onClick={() => void add()}>{busy ? "Adding…" : "Add and rewrite"}</button>
+        </div>
+      ) : null}
+      {error ? <p className="error">{error}</p> : null}
+    </div>
+  );
 }
 
 export function Panel() {
@@ -89,7 +117,7 @@ export function Panel() {
   return (
     <div className="panel-card" ref={card} data-testid="panel" data-phase={s.phase}>
       <div className="panel-head">
-        <Sanzaru s={s} />
+        <span className={`panel-mark${s.phase === "loading" || s.phase === "changing" ? " busy" : ""}`}><Mark /></span>
         <div>
           <div className="where" data-testid="panel-channel">{s.channel || "Saru"}</div>
           {s.recipient ? <div className="who" data-testid="panel-recipient">for {s.recipient}</div> : null}
@@ -109,7 +137,10 @@ export function Panel() {
             <div className="text" data-testid="panel-draft" style={{ opacity: s.phase === "changing" ? 0.4 : 1 }}>{s.message}</div>
           </div>
         ) : null}
+        {s.added ? <p className="added" data-testid="panel-added">{s.added}</p> : null}
         {s.note ? <p className="note" data-testid="panel-note">{s.note}</p> : null}
+        {s.phase === "ready" && s.newPerson ? <NewHere kind="person" name={s.newPerson} /> : null}
+        {s.phase === "ready" && s.newChannel ? <NewHere kind="channel" name={s.newChannel} /> : null}
         {s.error ? <p className="error" data-testid="panel-error">{s.error}</p> : null}
       </div>
       <div className="panel-foot">

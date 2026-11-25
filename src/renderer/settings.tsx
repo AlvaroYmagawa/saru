@@ -84,6 +84,17 @@ export function SettingsPage({ sync }: { sync?: SyncStatus }) {
         </div>
 
         <section className="block">
+          <div className="block-head"><h3>Appearance</h3></div>
+          <div className="segmented" role="radiogroup" aria-label="Theme">
+            {(["system", "light", "dark"] as const).map((t) => (
+              <button key={t} role="radio" aria-checked={s.theme === t} className={s.theme === t ? "on" : ""} data-testid={`theme-${t}`} onClick={() => void save({ theme: t })}>
+                {t === "system" ? "Match macOS" : t === "light" ? "Light" : "Dark"}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="block">
           <div className="block-head"><h3>Shortcut</h3><span className="hint">Starts a polish in any app</span></div>
           <ShortcutRecorder value={s.shortcut} onChange={(shortcut) => setS({ ...s, shortcut })} />
           <p className="label">In the panel, <kbd>⌘↵</kbd> or the Paste button pastes Saru's version. Enter alone never pastes, so it can't send your draft by accident.</p>

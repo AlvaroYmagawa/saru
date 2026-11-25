@@ -14,6 +14,12 @@ export interface PanelState {
   stage?: "see" | "hear" | "speak";
   /** The app Saru pastes into, e.g. "Slack". */
   app?: string;
+  /** Who it's for, when they aren't in People yet. */
+  newPerson?: string | null;
+  /** The named place it's going, when it isn't in Channels yet (e.g. "#x-acme-ops"). */
+  newChannel?: string | null;
+  /** What was just added from the panel, shown once. */
+  added?: string;
   original: string;
   /** Where Saru thinks it's going, e.g. "Slack DM · Hana Mori". */
   channel: string;
@@ -47,6 +53,8 @@ export interface SaruApi {
   accept(): Promise<void>;
   change(text: string): Promise<void>;
   closePanel(): Promise<void>;
+  /** Adds the new person or channel the panel found (hint: how to write to them) and rewrites. */
+  addFromPanel(kind: "person" | "channel", name: string, hint: string): Promise<Result<void>>;
   resizePanel(height: number): Promise<void>;
   onTab(fn: (tab: string) => void): () => void;
   // Data
@@ -64,6 +72,10 @@ export interface SaruApi {
   deleteChannel(id: string): Promise<Result<Channel>>;
   saveChannel(c: Channel): Promise<Result<Channel>>;
   saveProfile(p: Profile): Promise<Result<Profile>>;
+  tellProfile(request: string): Promise<Result<{ before: Profile; after: Profile; note: string | null }>>;
+  learnStyle(): Promise<Result<{ before: Profile; after: Profile; note: string | null; read?: number }>>;
+  /** Fires when Saru starts or finishes learning your style on its own. */
+  onLearning(fn: (s: { running: boolean; result?: string; error?: string }) => void): () => void;
   // Settings
   getSettings(): Promise<Settings>;
   saveSettings(s: Settings): Promise<Result<Settings>>;

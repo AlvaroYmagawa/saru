@@ -24,6 +24,8 @@ export interface Draft {
   note: string | null;
   /** Where Saru thinks the message is going, for the panel. */
   channel: string;
+  /** Who it's for when they aren't in People yet. */
+  newPerson: string | null;
 }
 
 /** `@Name` mentions in a text: up to three capitalised words after an @. */
@@ -67,7 +69,7 @@ export class Polisher {
   }
 
   private async call(prompt: string, resume?: string): Promise<Draft> {
-    const ans = await callClaude<{ message: unknown; recipient: unknown; note: unknown }>(
+    const ans = await callClaude<{ message: unknown; recipient: unknown; note: unknown; newPerson: unknown }>(
       {
         claudePath: this.env.claudePath,
         model: this.env.model,
@@ -91,6 +93,7 @@ export class Polisher {
       message: v.message,
       recipient: typeof v.recipient === "string" && v.recipient.trim() ? v.recipient : null,
       note: [lostNote, modelNote].filter(Boolean).join(" ") || null,
+      newPerson: typeof v.newPerson === "string" && v.newPerson.trim() ? v.newPerson.trim() : null,
       channel: this.channelLabel,
     };
   }

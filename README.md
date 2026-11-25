@@ -50,7 +50,7 @@ Everything Saru knows is a list of short **rules**, kept for:
   and rules for every message.
 - **People:** role, org, intimacy (1 cold contact … 5 close friend), the language they read, and
   how to write to them ("numbered lists for decisions", "never use 'kindly'").
-- **Channels:** each kind (Slack DM, Slack channel, email, WhatsApp, anywhere else) has its own
+- **Channels:** each kind (Slack DM, Slack channel, email, Notion comment, WhatsApp, anywhere else) has its own
   rules, and a named channel (`#x-acme-dev`) adds its own on top.
 
 <p align="center">
@@ -101,10 +101,15 @@ from your keychain (so macOS keeps your permissions across rebuilds), set
 2. macOS asks to let Saru use **Accessibility** and control **System Events**: allow both
    (System Settings → Privacy & Security). Saru needs them to copy your draft and paste the new
    one. An unsigned build has a new identity on each update, so you may need to allow it again.
-3. Open **You…** from the menu bar and set the language Saru should write in. Then add people and
-   rules as you go.
-4. Change the shortcut, model or `claude` path in **Settings…**. Click the shortcut and press the
-   keys you want; Saru tells you if another app already uses them.
+3. With no profile yet, Saru opens **You** and learns how you write from your own recent Slack
+   messages, through the Slack connection of your Claude Code. It can only read: every tool that
+   sends, drafts, reacts or edits is denied. No Slack connection? Tell Saru about yourself in a
+   sentence instead, or fill in the page.
+4. Write to someone or somewhere Saru doesn't know yet, and the panel says so: **Add them** takes
+   an optional line ("client at Acme, keep it formal"), saves them and rewrites the draft with
+   their notes.
+5. **Settings** has the shortcut (click it and press the keys you want; Saru tells you if another
+   app already uses them), light or dark theme, the model and the `claude` path.
 
 ## 四 · Keep your notes in a private repo
 

@@ -7,6 +7,8 @@ import { formatZodError } from "./schema";
 export const DEFAULT_SHORTCUT = "Alt+Command+P";
 
 export const Settings = z.object({
+  /** Light, dark, or follow macOS. */
+  theme: z.enum(["system", "light", "dark"]).default("system"),
   /** Electron accelerator that starts a polish. */
   shortcut: z.string().min(1).default(DEFAULT_SHORTCUT),
   /** `claude --model`. */

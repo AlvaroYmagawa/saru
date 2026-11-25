@@ -20,13 +20,16 @@ if (mode === "invalid") { process.stdout.write("not json"); process.exit(0); }
 
 if (system.includes("Saru app mode")) {
   if (prompt.startsWith("Change:")) {
-    out({ message: "Hi Hana,\n\nQuick one: can we move the release to Monday?\n\nThanks", recipient: "Hana Mori", note: "Made it shorter." });
+    out({ message: "Hi Hana,\n\nQuick one: can we move the release to Monday?\n\nThanks", recipient: "Hana Mori", note: "Made it shorter.", newPerson: null });
   } else {
     const draft = between("<<<DRAFT", "DRAFT>>>");
     const dm = prompt.match(/## Recipients from the window title\n(.+)/)?.[1] ?? "";
     const named = dm.startsWith("(none") ? null : dm;
     const channel = prompt.match(/## Channel: .*— (#[\w-]+)/)?.[1];
-    out({ message: `Hi Hana,\n\nQuick one: could we move the release to Monday? Happy to talk it through.\n\nThanks`, recipient: channel ?? named, note: named ? null : "No one matched; wrote it at intimacy 2." });
+    const dmName = prompt.match(/^Window: .*? — (.+?) \(DM\)/m)?.[1];
+    const known = dmName && prompt.includes(`### ${dmName}`);
+    const notes = prompt.includes("### Bo Chen") ? " (Bo's notes applied.)" : "";
+    out({ message: `Hi ${dmName && !known ? dmName.split(" ")[0] : "Hana"},\n\nQuick one: could we move the release to Monday? Happy to talk it through.${notes}\n\nThanks`, recipient: channel ?? named, note: named ? null : "No one matched; wrote it at intimacy 2.", newPerson: dmName && !known ? dmName : null });
   }
 } else if (system.includes("writing rules for Saru")) {
   const req = between("<<<REQUEST", "REQUEST>>>");
@@ -35,7 +38,12 @@ if (system.includes("Saru app mode")) {
 } else if (system.includes("list of people")) {
   const req = between("<<<REQUEST", "REQUEST>>>");
   if (/^new:/i.test(req)) out({ action: "create", slug: null, person: { fullName: "Ana Lima", aliases: ["Ana"], role: "Legal", org: "Acme (client)", intimacy: 1, nativeLanguage: null, outputLanguage: null, timezone: null, email: null, about: "Legal at Acme." }, note: "Assumed intimacy 1 from “keep it formal”." });
+  else if (/^bo chen/i.test(req)) out({ action: "edit", slug: "bo-chen", person: { fullName: "Bo Chen", aliases: ["Bo"], role: "Client", org: "Acme (client)", intimacy: 1, nativeLanguage: null, outputLanguage: null, timezone: null, email: null, about: "Client at Acme." }, note: null });
   else out({ action: "edit", slug: "hana-mori", person: { fullName: "Hana Mori", aliases: ["Hana", "HM"], role: "CFO", org: "Acme (client)", intimacy: 2, nativeLanguage: "en", outputLanguage: null, timezone: "Europe/London", email: null, about: "Product lead on the Acme side. Signs off every release." }, note: null });
+} else if (system.includes("learn how the user writes")) {
+  out({ name: "Kai", nativeLanguage: "pt-BR", outputLanguage: "en-GB", about: "Short, direct messages; warm with teammates.", rules: [{ text: "Sign off with just K.", category: "format" }, { text: "Never use exclamation marks.", category: "avoid" }], note: null, read: 38 });
+} else if (system.includes("user's own profile")) {
+  out({ name: null, nativeLanguage: null, outputLanguage: null, about: null, rules: [{ text: "Never use exclamation marks.", category: "avoid" }], note: null });
 } else if (system.includes("named place")) {
   out({ action: "create", kind: "slack-channel", match: "#x-acme-ops", intimacy: 2, about: "Client ops channel.", note: null });
 } else {

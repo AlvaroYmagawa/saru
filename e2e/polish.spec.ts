@@ -17,9 +17,10 @@ test("A Slack DM draft is polished for Hana; Enter alone never pastes, ⌘↵ do
   describe("Presses the shortcut in a pretend Slack DM with Hana Mori, checks the panel, presses Enter (nothing happens) and then ⌘↵ (pastes).");
   l = await launch();
   await test.step("Press the shortcut in a Slack DM with Hana", async () => trigger(l!));
-  await test.step("The three monkeys are lit and the panel shows where it's going, the original and Saru's version", async () => {
+  await test.step("The panel shows Saru's mark, where it's going, the original and Saru's version", async () => {
     await expect(l!.panel.getByTestId("panel")).toHaveAttribute("data-phase", "ready");
-    await expect(l!.panel.locator(".monkey.done")).toHaveCount(3);
+    await expect(l!.panel.getByTestId("panel-step")).toHaveText("Ready to paste");
+    await expect(l!.panel.locator(".panel-mark svg")).toHaveCount(1);
     await expect(l!.panel.getByTestId("panel-channel")).toHaveText("Slack DM · Hana Mori");
     await expect(l!.panel.getByTestId("panel-recipient")).toHaveText("for Hana Mori");
     await expect(l!.panel.getByTestId("panel-original")).toContainText("da pra mover o release");

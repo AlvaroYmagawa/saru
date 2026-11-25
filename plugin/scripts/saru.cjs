@@ -91,13 +91,15 @@ function claudeArgs(c) {
     JSON.stringify(c.schema),
     "--tools",
     "",
-    "--setting-sources",
-    "",
-    "--strict-mcp-config",
     "--disable-slash-commands",
     "--system-prompt",
     c.systemPrompt
   ];
+  if (c.readOnly) {
+    args.push("--permission-mode", "dontAsk", "--allowedTools", ...c.readOnly.allow, "--disallowedTools", ...c.readOnly.deny);
+  } else {
+    args.push("--setting-sources", "", "--strict-mcp-config");
+  }
   if (c.resume) args.push("--resume", c.resume);
   return args;
 }
@@ -20035,15 +20037,18 @@ You run inside the Saru app. Nobody can answer a question, and you have no tools
   - note: one short line only when the user must check something before sending (a best-guess
     match, nobody matched, the draft read very differently from the stored intimacy), else null.
     Never describe what you did (translating, shortening, applying rules).
+  - newPerson: when the message is addressed to one person who isn't in People, their name as
+    the window title or the greeting gives it (full name if shown, else first name); else null.
 `;
 var POLISH_SCHEMA = {
   type: "object",
   properties: {
     message: { type: "string" },
     recipient: { type: ["string", "null"] },
-    note: { type: ["string", "null"] }
+    note: { type: ["string", "null"] },
+    newPerson: { type: ["string", "null"] }
   },
-  required: ["message", "recipient", "note"],
+  required: ["message", "recipient", "note", "newPerson"],
   additionalProperties: false
 };
 
@@ -20110,6 +20115,7 @@ var Polisher = class {
       message: v.message,
       recipient: typeof v.recipient === "string" && v.recipient.trim() ? v.recipient : null,
       note: [lostNote, modelNote].filter(Boolean).join(" ") || null,
+      newPerson: typeof v.newPerson === "string" && v.newPerson.trim() ? v.newPerson.trim() : null,
       channel: this.channelLabel
     };
   }
@@ -20302,6 +20308,8 @@ var import_node_os2 = __toESM(require("node:os"));
 var import_node_path = __toESM(require("node:path"));
 var DEFAULT_SHORTCUT = "Alt+Command+P";
 var Settings = external_exports.object({
+  /** Light, dark, or follow macOS. */
+  theme: external_exports.enum(["system", "light", "dark"]).default("system"),
   /** Electron accelerator that starts a polish. */
   shortcut: external_exports.string().min(1).default(DEFAULT_SHORTCUT),
   /** `claude --model`. */

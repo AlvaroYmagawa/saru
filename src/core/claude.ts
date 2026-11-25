@@ -65,6 +65,11 @@ export interface ClaudeCall {
   timeoutSeconds: number;
   resume?: string;
   env?: NodeJS.ProcessEnv;
+  /**
+   * Read-only Slack access for learning the user's style: loads the user's own Claude Code setup
+   * (so their Slack connection is there) but allows only these tools and denies `deny` outright.
+   */
+  readOnly?: { allow: string[]; deny: string[] };
 }
 
 /**
@@ -79,11 +84,15 @@ export function claudeArgs(c: ClaudeCall): string[] {
     "--output-format", "json",
     "--json-schema", JSON.stringify(c.schema),
     "--tools", "",
-    "--setting-sources", "",
-    "--strict-mcp-config",
     "--disable-slash-commands",
     "--system-prompt", c.systemPrompt,
   ];
+  if (c.readOnly) {
+    // dontAsk: anything not allowed here is refused; the deny list wins over the user's own allows.
+    args.push("--permission-mode", "dontAsk", "--allowedTools", ...c.readOnly.allow, "--disallowedTools", ...c.readOnly.deny);
+  } else {
+    args.push("--setting-sources", "", "--strict-mcp-config");
+  }
   if (c.resume) args.push("--resume", c.resume);
   return args;
 }
