@@ -40,7 +40,7 @@ you meant, in the way the reader takes it well, and nothing you'd regret.
 
 The panel walks the same three steps. 見 lights when Saru has read where you're writing, 聞 when
 it has gathered what it knows about the person and the place, and 言 when the message is written.
-The colours come from the same carving: verdigris green, lacquer black and gold leaf.
+The mark is the monkey himself, painted in one brush mass in the browns of a macaque's coat.
 
 ## 二 · Your notes: people, channels, you
 
@@ -97,7 +97,7 @@ from your keychain (so macOS keeps your permissions across rebuilds), set
 
 ### First run
 
-1. Saru lives in the menu bar (猿). Press **⌥⌘P** in any text box.
+1. Saru lives in the menu bar (the monkey's head). Press **⌥⌘P** in any text box.
 2. macOS asks to let Saru use **Accessibility** and control **System Events**: allow both
    (System Settings → Privacy & Security). Saru needs them to copy your draft and paste the new
    one. An unsigned build has a new identity on each update, so you may need to allow it again.
@@ -177,6 +177,7 @@ bun run saru -- help # the command line: context, migrate, add-rule, tell, sync
 | `src/core` | notes, channels, the Claude calls, sync, import (no Electron) |
 | `src/main` | menu bar, shortcut, panel, copy/paste through System Events |
 | `src/renderer` | the panel and the People / Channels / You / Settings window |
+| `resources/monkey.svg` | the mark: app icon, menu-bar glyph, banners and the app's rail all come from it |
 | `src/cli` | `saru`, also bundled into the plugin as `plugin/scripts/saru.cjs` |
 | `plugin` | the Claude Code plugin, and `rules.md`: how Saru writes |
 

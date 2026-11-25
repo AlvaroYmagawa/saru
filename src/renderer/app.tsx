@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import type { Channel, DataSnapshot, Person, Profile, SaruApi, SyncStatus } from "../shared/api";
 import { CHANNEL_KINDS, KIND_LABELS } from "../core/schema";
+import { Mark } from "./mark";
 import { Panel } from "./panel";
 import { RulesEditor } from "./rules";
 import { ToastHost, useToast } from "./toast";
@@ -47,7 +48,7 @@ function App() {
   return (
     <div className={`shell${single ? " single" : ""}`}>
       <nav className="rail" aria-label="Sections">
-        <span className="seal" aria-hidden title="Saru">猿</span>
+        <span className="rail-mark" title="Saru"><Mark /></span>
         {TABS.map((t) => (
           <button key={t.id} className={tab === t.id ? "on" : ""} data-testid={`tab-${t.id}`} aria-current={tab === t.id ? "page" : undefined} onClick={() => setTab(t.id)}>
             <span className="k" aria-hidden>{t.kanji}</span>
