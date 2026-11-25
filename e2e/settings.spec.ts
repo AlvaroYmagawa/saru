@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
-import { launch, type Launched } from "./helpers";
+import { launch, type Launched, close } from "./helpers";
 
 let l: Launched | undefined;
 test.afterEach(async () => {
-  await l?.app.close();
+  await close(l);
   l = undefined;
 });
 const criterion = (text: string) => test.info().annotations.push({ type: "criterion", description: text });

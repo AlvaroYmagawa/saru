@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { claudeCalls, launch, pasted, trigger, type Launched } from "./helpers";
+import { claudeCalls, launch, pasted, trigger, type Launched, close } from "./helpers";
 
 let l: Launched | undefined;
 test.afterEach(async () => {
-  await l?.app.close();
+  await close(l);
   l = undefined;
 });
 

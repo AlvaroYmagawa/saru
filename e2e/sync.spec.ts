@@ -3,11 +3,11 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { launch, type Launched } from "./helpers";
+import { launch, type Launched, close } from "./helpers";
 
 let l: Launched | undefined;
 test.afterEach(async () => {
-  await l?.app.close();
+  await close(l);
   l = undefined;
 });
 const criterion = (text: string) => test.info().annotations.push({ type: "criterion", description: text });

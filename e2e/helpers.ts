@@ -1,4 +1,4 @@
-import { _electron as electron, expect, type ElectronApplication, type Page } from "@playwright/test";
+import { _electron as electron, expect, test, type ElectronApplication, type Page } from "@playwright/test";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -13,6 +13,8 @@ export interface Launched {
   dataDir: string;
   claudeLog: string;
   configFile: string;
+  /** Set once the panel was shown, so its video is worth attaching. */
+  panelUsed?: boolean;
 }
 
 export interface LaunchOpts {
@@ -61,7 +63,10 @@ export async function launch(o: LaunchOpts = {}): Promise<Launched> {
       SARU_E2E_PASTE_FILE: path.join(tmp, "pasted.json"),
       ...(o.remote ? { SARU_E2E_REMOTE: o.remote } : {}),
     },
-    ...(o.recordVideoDir ? { recordVideo: { dir: o.recordVideoDir } } : {}),
+    // SARU_RECORD=1 records every window (for the review page), one video each.
+    ...(o.recordVideoDir || process.env.SARU_RECORD === "1"
+      ? { recordVideo: { dir: o.recordVideoDir ?? test.info().outputPath("videos"), size: { width: 1100, height: 720 } } }
+      : {}),
   });
   const pages = async () => app.windows();
   let main: Page | undefined;
@@ -93,5 +98,20 @@ export function readJson(l: Launched, rel: string): any {
 }
 
 export async function trigger(l: Launched): Promise<void> {
+  l.panelUsed = true;
   await l.main.evaluate(() => (window as any).saru.testTrigger());
+}
+
+/** Closes the app and, when recording, attaches the app window's video then the panel's. */
+export async function close(l: Launched | undefined): Promise<void> {
+  if (!l) return;
+  const videos = [l.main.video(), l.panelUsed ? l.panel.video() : null];
+  await l.app.close();
+  if (process.env.SARU_RECORD !== "1") return;
+  const roles = ["App window", "Panel"];
+  for (const [i, v] of videos.entries()) {
+    if (!v) continue;
+    test.info().annotations.push({ type: "role", description: roles[i]! });
+    await test.info().attach("video", { path: await v.path(), contentType: "video/webm" });
+  }
 }
