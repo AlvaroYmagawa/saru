@@ -9,6 +9,7 @@ import { loadSettings, resolveDataDir } from "../core/config";
 import { contentItemCount, importPerson, importTarget } from "../core/migrate";
 import { CHANNEL_KINDS, type ChannelKind } from "../core/schema";
 import { FileStore } from "../core/store";
+import { DataSync } from "../core/sync";
 
 const USAGE = `saru <command>
 
@@ -19,7 +20,8 @@ const USAGE = `saru <command>
   migrate --from <dir> [--dry-run]
                                import Markdown notes: <dir>/people/*.md, <dir>/targets/*/config.md
   polish --app <app> --title <title> --draft <text>
-  add-rule --person <slug> | --channel <id> | --profile  <request>`;
+  add-rule --person <slug> | --channel <id> | --profile  <request>
+  sync                         connect the data folder to the configured repo and push`;
 
 async function main(): Promise<number> {
   const [cmd, ...rest] = process.argv.slice(2);
@@ -33,6 +35,17 @@ async function main(): Promise<number> {
       return context(store, rest);
     case "migrate":
       return migrate(store, rest);
+    case "sync": {
+      if (!settings.dataRepo) throw new Error("set dataRepo (owner/name) in the config first");
+      await store.ensureSeed();
+      const login = await findInLoginShell("git");
+      const sync = new DataSync(store.dir, settings.dataRepo, 0, { git: login?.path ?? "git", env: login ? { ...process.env, PATH: login.envPath } : process.env });
+      let st = await sync.connect();
+      if (st.state !== "refused" && st.state !== "error") st = await sync.syncNow();
+      sync.stop();
+      console.log(JSON.stringify(st, null, 2));
+      return st.state === "idle" ? 0 : 1;
+    }
     case "polish":
     case "add-rule": {
       const claude = settings.claudePath || (await findInLoginShell("claude"))?.path;

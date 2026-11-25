@@ -29,8 +29,8 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 
 // src/cli/saru.ts
-var import_node_fs4 = require("node:fs");
-var import_node_path3 = __toESM(require("node:path"));
+var import_node_fs5 = require("node:fs");
+var import_node_path4 = __toESM(require("node:path"));
 var import_node_util = require("node:util");
 
 // src/core/agents.ts
@@ -101,8 +101,8 @@ function claudeArgs(c) {
   if (c.resume) args.push("--resume", c.resume);
   return args;
 }
-async function callClaude(c, run = runProcess) {
-  const res = await run(c.claudePath, claudeArgs(c), c.timeoutSeconds * 1e3, c.env);
+async function callClaude(c, run2 = runProcess) {
+  const res = await run2(c.claudePath, claudeArgs(c), c.timeoutSeconds * 1e3, c.env);
   if (res.status !== 0) {
     const detail = res.stderr.trim().split("\n").pop() || res.stdout.trim().split("\n").pop() || "";
     throw new ClaudeError("failed", `Claude exited with status ${res.status}. ${detail}`.trim());
@@ -987,10 +987,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path4) {
-  if (!path4)
+function getElementAtPath(obj, path5) {
+  if (!path5)
     return obj;
-  return path4.reduce((acc, key) => acc?.[key], obj);
+  return path5.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -1330,11 +1330,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path4, issues) {
+function prefixIssues(path5, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path4);
+    iss.path.unshift(path5);
     return iss;
   });
 }
@@ -1796,16 +1796,16 @@ function flattenError(error62, mapper = (issue2) => issue2.message) {
 }
 function formatError(error62, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error63, path4 = []) => {
+  const processError = (error63, path5 = []) => {
     for (const issue2 of error63.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path4, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path5, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else {
-        const fullpath = [...path4, ...issue2.path];
+        const fullpath = [...path5, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -1844,17 +1844,17 @@ function formatError(error62, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error62, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error63, path4 = []) => {
+  const processError = (error63, path5 = []) => {
     var _a3;
     for (const issue2 of error63.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path4, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path5, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else {
-        const fullpath = [...path4, ...issue2.path];
+        const fullpath = [...path5, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -1893,8 +1893,8 @@ function treeifyError(error62, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path4 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path4) {
+  const path5 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path5) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -19032,13 +19032,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path4 = ref.slice(1).split("/").filter(Boolean);
-  if (path4.length === 0) {
+  const path5 = ref.slice(1).split("/").filter(Boolean);
+  if (path5.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path4[0] === defsKey) {
-    const key = path4[1] === void 0 ? void 0 : decodeJSONPointerSegment(path4[1]);
+  if (path5[0] === defsKey) {
+    const key = path5[1] === void 0 ? void 0 : decodeJSONPointerSegment(path5[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -19673,7 +19673,7 @@ function visit(schema, fnOrHandlers) {
     return h ? h(node2, rewritten) : node2;
   };
   const cache = /* @__PURE__ */ new Map();
-  function run(s) {
+  function run2(s) {
     const cached2 = cache.get(s);
     if (cached2 === RESOLVING) {
       return new $ZodLazy({
@@ -19699,21 +19699,21 @@ function visit(schema, fnOrHandlers) {
         let changed = false;
         const newShape = {};
         for (const k of keys) {
-          const mapped = run(oldShape[k]);
+          const mapped = run2(oldShape[k]);
           if (mapped !== oldShape[k])
             changed = true;
           newShape[k] = mapped;
         }
         let newCatchall = def.catchall;
         if (def.catchall) {
-          newCatchall = run(def.catchall);
+          newCatchall = run2(def.catchall);
           if (newCatchall !== def.catchall)
             changed = true;
         }
         return changed ? clone(s, { ...def, shape: newShape, catchall: newCatchall }) : s;
       }
       case "array": {
-        const mapped = run(def.element);
+        const mapped = run2(def.element);
         return mapped === def.element ? s : clone(s, { ...def, element: mapped });
       }
       case "tuple": {
@@ -19721,14 +19721,14 @@ function visit(schema, fnOrHandlers) {
         let changed = false;
         const newItems = [];
         for (const item of oldItems) {
-          const mapped = run(item);
+          const mapped = run2(item);
           if (mapped !== item)
             changed = true;
           newItems.push(mapped);
         }
         let newRest = def.rest;
         if (def.rest) {
-          newRest = run(def.rest);
+          newRest = run2(def.rest);
           if (newRest !== def.rest)
             changed = true;
         }
@@ -19736,12 +19736,12 @@ function visit(schema, fnOrHandlers) {
       }
       case "record":
       case "map": {
-        const newKey = run(def.keyType);
-        const newVal = run(def.valueType);
+        const newKey = run2(def.keyType);
+        const newVal = run2(def.valueType);
         return newKey === def.keyType && newVal === def.valueType ? s : clone(s, { ...def, keyType: newKey, valueType: newVal });
       }
       case "set": {
-        const newVal = run(def.valueType);
+        const newVal = run2(def.valueType);
         return newVal === def.valueType ? s : clone(s, { ...def, valueType: newVal });
       }
       case "union": {
@@ -19749,7 +19749,7 @@ function visit(schema, fnOrHandlers) {
         let changed = false;
         const newOptions = [];
         for (const opt of oldOptions) {
-          const mapped = run(opt);
+          const mapped = run2(opt);
           if (mapped !== opt)
             changed = true;
           newOptions.push(mapped);
@@ -19757,8 +19757,8 @@ function visit(schema, fnOrHandlers) {
         return changed ? clone(s, { ...def, options: newOptions }) : s;
       }
       case "intersection": {
-        const newLeft = run(def.left);
-        const newRight = run(def.right);
+        const newLeft = run2(def.left);
+        const newRight = run2(def.right);
         return newLeft === def.left && newRight === def.right ? s : clone(s, { ...def, left: newLeft, right: newRight });
       }
       case "optional":
@@ -19770,23 +19770,23 @@ function visit(schema, fnOrHandlers) {
       case "nonoptional":
       case "promise":
       case "success": {
-        const newInner = run(def.innerType);
+        const newInner = run2(def.innerType);
         return newInner === def.innerType ? s : clone(s, { ...def, innerType: newInner });
       }
       case "pipe": {
-        const newIn = run(def.in);
-        const newOut = run(def.out);
+        const newIn = run2(def.in);
+        const newOut = run2(def.out);
         return newIn === def.in && newOut === def.out ? s : clone(s, { ...def, in: newIn, out: newOut });
       }
       case "function": {
-        const newInput = run(def.input);
-        const newOutput = run(def.output);
+        const newInput = run2(def.input);
+        const newOutput = run2(def.output);
         return newInput === def.input && newOutput === def.output ? s : clone(s, { ...def, input: newInput, output: newOutput });
       }
       case "lazy": {
         const original = def.getter;
         const { _cachedInner, ...rest } = def;
-        return clone(s, { ...rest, getter: () => run(original()) });
+        return clone(s, { ...rest, getter: () => run2(original()) });
       }
       // A leaf by choice: `parts` are regex fragments, not data positions.
       case "template_literal":
@@ -19817,7 +19817,7 @@ function visit(schema, fnOrHandlers) {
       }
     }
   }
-  return run(schema);
+  return run2(schema);
 }
 
 // node_modules/zod/v4/classic/deep-partial.js
@@ -20129,8 +20129,10 @@ messages in its user's voice. You have no tools and nobody can answer questions.
   lists), vocabulary (words or spellings to use), avoid (words, phrasings or habits to never
   use), context (facts about the reader or place that shape the message).
 - If an existing rule already says the same, return no rules and say so in note.
-- If the request isn't a writing rule (e.g. a role change, a command, gibberish), return no rules
-  and explain in note in one short line.
+- A fact about who someone is (their role, company, intimacy, language, time zone) is not a rule,
+  even phrased as one: return no rules and say in note to tell Saru on the person's page instead.
+- If the request isn't a writing rule (a command, gibberish), return no rules and explain in note
+  in one short line.
 - note otherwise: null.`;
 async function scopeRules(store, scope) {
   if (scope.type === "profile") return { label: "the user's own rules (every message)", rules: (await store.getProfile()).rules };
@@ -20678,6 +20680,157 @@ async function exists(p) {
   }
 }
 
+// src/core/sync.ts
+var import_node_child_process2 = require("node:child_process");
+var import_node_fs4 = require("node:fs");
+var import_node_path3 = __toESM(require("node:path"));
+async function repoVisibility(repo, fetchImpl = fetch) {
+  try {
+    const res = await fetchImpl(`https://api.github.com/repos/${repo}`, { headers: { Accept: "application/vnd.github+json", "User-Agent": "saru-app" } });
+    if (res.status === 200) return "public";
+    if (res.status === 404) return "private-or-missing";
+    return "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+function run(g, cwd, args, timeoutMs = 6e4) {
+  return new Promise((resolve, reject) => {
+    (0, import_node_child_process2.execFile)(g.git, args, { cwd, env: { ...g.env ?? process.env, GIT_TERMINAL_PROMPT: "0" }, timeout: timeoutMs }, (err, stdout, stderr) => {
+      if (err) reject(new Error((stderr || stdout || err.message).trim().split("\n").slice(-3).join(" ")));
+      else resolve(stdout.trim());
+    });
+  });
+}
+var DataSync = class {
+  constructor(dir, repo, delayMs, g) {
+    this.dir = dir;
+    this.repo = repo;
+    this.delayMs = delayMs;
+    this.g = g;
+    this.status = { state: repo ? "idle" : "off", repo };
+  }
+  dir;
+  repo;
+  delayMs;
+  g;
+  status;
+  timer;
+  running;
+  again = false;
+  listeners = /* @__PURE__ */ new Set();
+  get current() {
+    return this.status;
+  }
+  onStatus(fn) {
+    this.listeners.add(fn);
+    return () => this.listeners.delete(fn);
+  }
+  set(s) {
+    this.status = { ...this.status, ...s };
+    for (const fn of this.listeners) fn(this.status);
+  }
+  url() {
+    return this.g.remoteUrl ? this.g.remoteUrl(this.repo) : `https://github.com/${this.repo}.git`;
+  }
+  /**
+   * Makes the data folder a clone of the repo. When the repo already has data and the folder
+   * holds people of its own, the folder is copied aside first so nothing is lost.
+   */
+  async connect() {
+    if (!this.repo) return this.status;
+    const vis = await (this.g.visibility ?? repoVisibility)(this.repo);
+    if (vis === "public") {
+      this.set({ state: "refused", message: `${this.repo} is public: Saru only syncs to a private repo, since your notes about people are personal. Make it private on GitHub, or pick another repo.` });
+      return this.status;
+    }
+    try {
+      await import_node_fs4.promises.mkdir(this.dir, { recursive: true });
+      if (!(0, import_node_fs4.existsSync)(import_node_path3.default.join(this.dir, ".git"))) {
+        await run(this.g, this.dir, ["init", "-q", "-b", "main"]);
+        await run(this.g, this.dir, ["remote", "add", "origin", this.url()]);
+      } else {
+        await run(this.g, this.dir, ["remote", "set-url", "origin", this.url()]).catch(() => run(this.g, this.dir, ["remote", "add", "origin", this.url()]));
+      }
+      await run(this.g, this.dir, ["fetch", "-q", "origin"]);
+      const remoteHasMain = await run(this.g, this.dir, ["rev-parse", "--verify", "-q", "origin/main"]).then(() => true, () => false);
+      const localHasCommit = await run(this.g, this.dir, ["rev-parse", "--verify", "-q", "HEAD"]).then(() => true, () => false);
+      if (remoteHasMain && !localHasCommit) {
+        const backup = await this.backupIfHasPeople();
+        await run(this.g, this.dir, ["checkout", "-q", "-f", "-B", "main", "origin/main"]);
+        await run(this.g, this.dir, ["clean", "-q", "-fd"]);
+        this.set({ state: "idle", message: backup ? `Took the data in ${this.repo}; your local copy is in ${backup}.` : void 0 });
+      } else {
+        this.set({ state: "idle", message: void 0 });
+        this.schedule(0);
+      }
+    } catch (e) {
+      this.set({ state: "error", message: `Couldn't reach ${this.repo}: ${e.message}` });
+    }
+    return this.status;
+  }
+  async backupIfHasPeople() {
+    const people = import_node_path3.default.join(this.dir, "people");
+    const names = (0, import_node_fs4.existsSync)(people) ? (await import_node_fs4.promises.readdir(people)).filter((n) => n.endsWith(".json")) : [];
+    if (!names.length) return void 0;
+    const stamp = (this.g.now?.() ?? /* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-");
+    const backup = `${this.dir}.local-${stamp}`;
+    await import_node_fs4.promises.cp(this.dir, backup, { recursive: true });
+    return backup;
+  }
+  /** Call after every change; changes within the delay become one commit. */
+  changed() {
+    if (this.status.state === "off" || this.status.state === "refused") return;
+    this.set({ state: "pending" });
+    this.schedule(this.delayMs);
+  }
+  schedule(ms) {
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => void this.syncNow(), ms);
+    this.timer.unref?.();
+  }
+  async syncNow() {
+    if (!this.repo || this.status.state === "refused") return this.status;
+    if (this.running) {
+      this.again = true;
+      await this.running;
+      return this.status;
+    }
+    this.running = this.doSync().finally(() => {
+      this.running = void 0;
+    });
+    await this.running;
+    if (this.again) {
+      this.again = false;
+      return this.syncNow();
+    }
+    return this.status;
+  }
+  async doSync() {
+    this.set({ state: "syncing" });
+    try {
+      await run(this.g, this.dir, ["add", "-A"]);
+      const dirty = (await run(this.g, this.dir, ["status", "--porcelain"])).length > 0;
+      if (dirty) {
+        const changed = (await run(this.g, this.dir, ["diff", "--cached", "--name-only"])).split("\n").filter(Boolean);
+        const subject = changed.length === 1 ? `saru: update ${changed[0]}` : `saru: update ${changed.length} files`;
+        await run(this.g, this.dir, ["-c", "user.name=Saru", "-c", "user.email=saru@localhost", "commit", "-q", "-m", subject]);
+      }
+      const remoteHasMain = await run(this.g, this.dir, ["ls-remote", "--heads", "origin", "main"]).then((o) => o.length > 0);
+      if (remoteHasMain) await run(this.g, this.dir, ["-c", "user.name=Saru", "-c", "user.email=saru@localhost", "pull", "-q", "--rebase", "origin", "main"]);
+      const hasCommit = await run(this.g, this.dir, ["rev-parse", "--verify", "-q", "HEAD"]).then(() => true, () => false);
+      if (hasCommit) await run(this.g, this.dir, ["push", "-q", "origin", "HEAD:main"]);
+      this.set({ state: "idle", message: void 0, lastSyncAt: (this.g.now?.() ?? /* @__PURE__ */ new Date()).toISOString() });
+    } catch (e) {
+      this.set({ state: "error", message: `Sync failed, will retry in a minute: ${e.message}` });
+      this.schedule(6e4);
+    }
+  }
+  stop() {
+    clearTimeout(this.timer);
+  }
+};
+
 // src/cli/saru.ts
 var USAGE = `saru <command>
 
@@ -20688,7 +20841,8 @@ var USAGE = `saru <command>
   migrate --from <dir> [--dry-run]
                                import Markdown notes: <dir>/people/*.md, <dir>/targets/*/config.md
   polish --app <app> --title <title> --draft <text>
-  add-rule --person <slug> | --channel <id> | --profile  <request>`;
+  add-rule --person <slug> | --channel <id> | --profile  <request>
+  sync                         connect the data folder to the configured repo and push`;
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const settings = await loadSettings();
@@ -20701,6 +20855,17 @@ async function main() {
       return context(store, rest);
     case "migrate":
       return migrate(store, rest);
+    case "sync": {
+      if (!settings.dataRepo) throw new Error("set dataRepo (owner/name) in the config first");
+      await store.ensureSeed();
+      const login = await findInLoginShell("git");
+      const sync = new DataSync(store.dir, settings.dataRepo, 0, { git: login?.path ?? "git", env: login ? { ...process.env, PATH: login.envPath } : process.env });
+      let st = await sync.connect();
+      if (st.state !== "refused" && st.state !== "error") st = await sync.syncNow();
+      sync.stop();
+      console.log(JSON.stringify(st, null, 2));
+      return st.state === "idle" ? 0 : 1;
+    }
     case "polish":
     case "add-rule": {
       const claude = settings.claudePath || (await findInLoginShell("claude"))?.path;
@@ -20725,8 +20890,8 @@ async function main() {
 }
 function rulesFile() {
   const rel = ["skills", "polish", "references", "rules.md"];
-  const inPlugin = import_node_path3.default.join(__dirname, "..", ...rel);
-  return (0, import_node_fs4.existsSync)(inPlugin) ? inPlugin : import_node_path3.default.join(__dirname, "..", "plugin", ...rel);
+  const inPlugin = import_node_path4.default.join(__dirname, "..", ...rel);
+  return (0, import_node_fs5.existsSync)(inPlugin) ? inPlugin : import_node_path4.default.join(__dirname, "..", "plugin", ...rel);
 }
 async function context(store, args) {
   const { values } = (0, import_node_util.parseArgs)({ args, options: { channel: { type: "string" }, to: { type: "string" } } });
@@ -20755,9 +20920,9 @@ async function migrate(store, args) {
   let ok = 0;
   let lost = 0;
   const report = [];
-  const peopleDir = import_node_path3.default.join(values.from, "people");
-  for (const name of (await import_node_fs4.promises.readdir(peopleDir).catch(() => [])).filter((n) => n.endsWith(".md")).sort()) {
-    const text = await import_node_fs4.promises.readFile(import_node_path3.default.join(peopleDir, name), "utf8");
+  const peopleDir = import_node_path4.default.join(values.from, "people");
+  for (const name of (await import_node_fs5.promises.readdir(peopleDir).catch(() => [])).filter((n) => n.endsWith(".md")).sort()) {
+    const text = await import_node_fs5.promises.readFile(import_node_path4.default.join(peopleDir, name), "utf8");
     const { value, unmapped } = importPerson(name.slice(0, -3), text);
     const before = contentItemCount(text);
     const after = value.rules.length + (value.about ? value.about.split("\n\n").length : 0);
@@ -20766,10 +20931,10 @@ async function migrate(store, args) {
     if (!dry) await store.savePerson(value);
     ok++;
   }
-  const targetsDir = import_node_path3.default.join(values.from, "targets");
-  for (const name of (await import_node_fs4.promises.readdir(targetsDir).catch(() => [])).sort()) {
-    const file2 = import_node_path3.default.join(targetsDir, name, "config.md");
-    const text = await import_node_fs4.promises.readFile(file2, "utf8").catch(() => void 0);
+  const targetsDir = import_node_path4.default.join(values.from, "targets");
+  for (const name of (await import_node_fs5.promises.readdir(targetsDir).catch(() => [])).sort()) {
+    const file2 = import_node_path4.default.join(targetsDir, name, "config.md");
+    const text = await import_node_fs5.promises.readFile(file2, "utf8").catch(() => void 0);
     if (text === void 0) continue;
     const { value, unmapped } = importTarget(name, text);
     const before = contentItemCount(text);
