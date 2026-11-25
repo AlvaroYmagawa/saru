@@ -1,3 +1,4 @@
+import { watch, type FSWatcher } from "node:fs";
 import path from "node:path";
 import { app, BrowserWindow, globalShortcut, ipcMain, Menu, nativeImage, screen, Tray } from "electron";
 import { addChannelByPrompt, addRulesByPrompt, editPersonByPrompt, Polisher, updateRules, type AgentEnv, type RuleScope } from "../core/agents";
@@ -24,6 +25,7 @@ let polisher: Polisher | undefined;
 let target: { app: string } | undefined;
 let panelState: PanelState | undefined;
 let activeShortcut: string | undefined;
+let watcher: FSWatcher | undefined;
 
 if (!app.requestSingleInstanceLock()) app.quit();
 
@@ -295,6 +297,15 @@ async function startSync(): Promise<void> {
   store = new FileStore(resolveDataDir(settings));
   await store.ensureSeed();
   store.onChange(() => dataChanged());
+  // Changes from elsewhere (the CLI, the Claude Code plugin, a pull) show up and sync too.
+  watcher?.close();
+  try {
+    watcher = watch(store.dir, { recursive: true }, (_event, file) => {
+      if (file && !String(file).startsWith(".git") && String(file).endsWith(".json")) dataChanged();
+    });
+  } catch {
+    watcher = undefined;
+  }
   sync = new DataSync(store.dir, settings.dataRepo, settings.syncDelaySeconds * 1000, {
     git: "/usr/bin/git",
     env: loginEnv.env,

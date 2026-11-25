@@ -1,7 +1,7 @@
 import { existsSync, promises as fs } from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { addRulesByPrompt, Polisher } from "../core/agents";
+import { addRulesByPrompt, editPersonByPrompt, Polisher } from "../core/agents";
 import { buildContext, renderContext } from "../core/context";
 import { parseWindow, type WindowContext } from "../core/channel";
 import { findInLoginShell } from "../core/claude";
@@ -21,6 +21,7 @@ const USAGE = `saru <command>
                                import Markdown notes: <dir>/people/*.md, <dir>/targets/*/config.md
   polish --app <app> --title <title> --draft <text>
   add-rule --person <slug> | --channel <id> | --profile  <request>
+  tell <sentence>              change a person's details, or add someone
   sync                         connect the data folder to the configured repo and push`;
 
 async function main(): Promise<number> {
@@ -47,6 +48,7 @@ async function main(): Promise<number> {
       return st.state === "idle" ? 0 : 1;
     }
     case "polish":
+    case "tell":
     case "add-rule": {
       const claude = settings.claudePath || (await findInLoginShell("claude"))?.path;
       if (!claude) throw new Error("claude not found: set claudePath in the config");
@@ -58,15 +60,31 @@ async function main(): Promise<number> {
         console.log(JSON.stringify(d, null, 2));
         return 0;
       }
-      const { values, positionals } = parseArgs({ args: rest, allowPositionals: true, options: { person: { type: "string" }, channel: { type: "string" }, profile: { type: "boolean" } } });
-      const scope = values.person ? { type: "person" as const, slug: values.person } : values.channel ? { type: "channel" as const, id: values.channel } : { type: "profile" as const };
-      console.log(JSON.stringify(await addRulesByPrompt(store, scope, positionals.join(" "), env), null, 2));
+      if (cmd === "tell") {
+        const r = await editPersonByPrompt(store, rest.join(" "), undefined, env);
+        console.log(JSON.stringify({ action: r.action, person: r.after?.slug ?? null, note: r.note }, null, 2));
+      } else {
+        const { values, positionals } = parseArgs({ args: rest, allowPositionals: true, options: { person: { type: "string" }, channel: { type: "string" }, profile: { type: "boolean" } } });
+        const scope = values.person ? { type: "person" as const, slug: values.person } : values.channel ? { type: "channel" as const, id: values.channel } : { type: "profile" as const };
+        console.log(JSON.stringify(await addRulesByPrompt(store, scope, positionals.join(" "), env), null, 2));
+      }
+      await pushIfConfigured(store, settings.dataRepo);
       return 0;
     }
     default:
       console.log(USAGE);
-      return cmd ? 1 : 0;
+      return !cmd || cmd === "help" || cmd === "--help" ? 0 : 1;
   }
+}
+
+/** After a change from the command line, push it when a data repo is set (quietly, best effort). */
+async function pushIfConfigured(store: FileStore, repo: string): Promise<void> {
+  if (!repo) return;
+  const login = await findInLoginShell("git");
+  const sync = new DataSync(store.dir, repo, 0, { git: login?.path ?? "git", env: login ? { ...process.env, PATH: login.envPath } : process.env });
+  const st = await sync.syncNow();
+  sync.stop();
+  if (st.state !== "idle") console.error(`Saved, but not synced yet: ${st.message ?? st.state}`);
 }
 
 /** From dist/cli.cjs (the repo) or plugin/scripts/saru.cjs (the plugin). */

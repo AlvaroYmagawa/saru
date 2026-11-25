@@ -1,0 +1,11 @@
+{
+  "name": "saru",
+  "owner": { "name": "Saru" },
+  "plugins": [
+    {
+      "name": "saru",
+      "source": "./plugin",
+      "description": "Polish any message you write with Claude Code using Saru's people, channels and rules."
+    }
+  ]
+}

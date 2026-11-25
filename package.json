@@ -15,8 +15,9 @@
     "test": "vitest run",
     "e2e": "node scripts/build.mjs && playwright test",
     "check": "tsc --noEmit && vitest run",
-    "dist": "node scripts/build.mjs && electron-builder --mac dmg --publish never",
-    "saru": "node dist/cli.cjs"
+    "dist": "node scripts/build.mjs && electron-builder --mac --publish never",
+    "saru": "node dist/cli.cjs",
+    "art": "electron scripts/art/render.cjs"
   },
   "dependencies": {
     "zod": "4.6.7"
@@ -36,5 +37,57 @@
   },
   "trustedDependencies": [
     "electron"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlvaroYmagawa/saru.git"
+  },
+  "homepage": "https://github.com/AlvaroYmagawa/saru",
+  "build": {
+    "appId": "io.github.alvaroymagawa.saru",
+    "productName": "Saru",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**",
+      "package.json",
+      "!dist/**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "plugin/skills/polish/references/rules.md",
+        "to": "plugin/skills/polish/references/rules.md"
+      },
+      {
+        "from": "resources",
+        "to": "resources",
+        "filter": [
+          "trayTemplate*.png"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "hardenedRuntime": false,
+      "extendInfo": {
+        "LSUIElement": true,
+        "NSAppleEventsUsageDescription": "Saru asks System Events to copy the message you are writing and paste the polished one back."
+      }
+    },
+    "dmg": {
+      "title": "Saru ${version}"
+    }
+  }
 }
