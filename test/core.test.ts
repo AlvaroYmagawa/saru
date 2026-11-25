@@ -160,3 +160,35 @@ describe("R25 — @mentions survive the polish", () => {
     expect(parseWindow("Google Chrome", "Release plan | Notion").kind).toBe("notion");
   });
 });
+
+describe("R32 — the send guard lets only Saru's messages out", () => {
+  it("normalises away markup, mentions and punctuation, so the posted form matches the polished one", async () => {
+    const { fingerprint } = await import("../src/core/guard");
+    const polished = "Hi @Rob Marriott,\n\nGlad to hear that. We'll release it to the stores.\n\nThanks";
+    expect(fingerprint('Hi <mention url="user://abc" />,\n\n**Glad** to hear that. We\'ll release it to the stores.\nThanks')).toBe(fingerprint(polished));
+    expect(fingerprint("Hi <@U123>, glad to hear that. We'll release it to the stores. Thanks")).toBe(fingerprint(polished));
+    expect(fingerprint("Hi Rob, glad to hear that. We will ship it.")).not.toBe(fingerprint(polished));
+  });
+
+  it("reads the text of every sending tool, and ignores sends with no new text", async () => {
+    const { messageText } = await import("../src/core/guard");
+    expect(messageText("mcp__plugin_slack_slack__slack_send_message", { channel_id: "C1", message: "hi" })).toBe("hi");
+    expect(messageText("mcp__claude_ai_Slack__slack_send_message_draft", { message: "hi" })).toBe("hi");
+    expect(messageText("mcp__notion__notion-create-comment", { page_id: "p", markdown: "hi" })).toBe("hi");
+    expect(messageText("mcp__notion__notion-create-comment", { page_id: "p", rich_text: [{ text: { content: "h" } }, { text: { content: "i" } }] })).toBe("hi");
+    expect(messageText("mcp__claude_ai_Gmail__reply", { messageId: "m", body: "hi" })).toBe("hi");
+    expect(messageText("mcp__claude_ai_Gmail__send_message", { draftId: "d" })).toBeUndefined();
+    expect(messageText("mcp__claude_ai_Gmail__forward", { messageId: "m", forwardText: "fyi" })).toBe("fyi");
+  });
+
+  it("denies an unmarked message, allows it once marked, and forgets marks after a day", async () => {
+    const { decide, mark } = await import("../src/core/guard");
+    const file = path.join(mkdtempSync(path.join(os.tmpdir(), "saru-guard-")), "marks.json");
+    const send = { channel_id: "C1", message: "Quick one: could we move the release to Monday?" };
+    const t0 = Date.parse("2026-11-25T12:00:00Z");
+    expect((await decide("mcp__plugin_slack_slack__slack_send_message", send, t0, file)).allow).toBe(false);
+    await mark("Quick one: could we move the release to Monday?", t0, file);
+    expect((await decide("mcp__plugin_slack_slack__slack_send_message", send, t0 + 60_000, file)).allow).toBe(true);
+    expect((await decide("mcp__plugin_slack_slack__slack_send_message", send, t0 + 25 * 3600_000, file)).allow).toBe(false);
+  });
+});
