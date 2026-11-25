@@ -105,6 +105,14 @@ export async function trigger(l: Launched): Promise<void> {
 /** Closes the app and, when recording, attaches the app window's video then the panel's. */
 export async function close(l: Launched | undefined): Promise<void> {
   if (!l) return;
+  // SARU_SHOTS=<dir>: a screenshot of each window at the end of the test, for the review page.
+  const shots = process.env.SARU_SHOTS;
+  if (shots) {
+    const name = test.info().title.replace(/[^\w]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
+    mkdirSync(shots, { recursive: true });
+    await l.main.screenshot({ path: path.join(shots, `${name}--app.png`) }).catch(() => undefined);
+    if (l.panelUsed) await l.panel.screenshot({ path: path.join(shots, `${name}--panel.png`) }).catch(() => undefined);
+  }
   const videos = [l.main.video(), l.panelUsed ? l.panel.video() : null];
   await l.app.close();
   if (process.env.SARU_RECORD !== "1") return;
