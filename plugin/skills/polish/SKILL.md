@@ -1,9 +1,12 @@
 ---
 name: polish
-description: MANDATORY for any message addressed to a person, client, team or channel — Slack, email, DM, Notion comment, WhatsApp. Rewrites a draft (any language) into natural, native-sounding text in the user's output language, using Saru's stored rules for the user, each person and each channel. Invoke BEFORE writing a single word whenever the user asks for a message to be written, drafted, replied to, translated, polished, shortened or naturalised for someone — including "send this to <name>", "reply to <name>", "write a message to <name>", "answer this on Slack", "how do I say this", "polish this", "manda isso pro <nome>", "responde o <nome>", "escreve uma mensagem pra <nome>", "como eu falo isso". Also for changing Saru's notes from a session ("add a rule for <name>: …", "<name> is our CFO now"). Applies to messages the agent drafts from scratch, not just ones the user pastes.
+description: MANDATORY before any message to a person, client, team or channel is written, sent or posted — Slack, email, DM, Notion comment, WhatsApp — and it comes BEFORE slack:slack-messaging or any tool that sends: those only deliver; this writes the words. Rewrites the draft (any language) into natural, native text in the user's voice using Saru's stored rules for the user, the recipient and the channel. Triggers on "send this to <name>", "reply to <name>", "write a message to <name>", "answer this on Slack", "how do I say this", "polish this", "manda isso pro <nome>", "responde o <nome>", "escreve uma mensagem pra <nome>", "como eu falo isso", and on drafts the agent writes itself. Also for changing Saru's notes ("add a rule for <name>: …", "<name> is our CFO now").
 ---
 
 # Saru · polish
+
+Run this first whenever a message to someone is about to be written or sent; a sending skill or
+tool (Slack, email, Notion) only delivers the text this skill produced, after the user approved it.
 
 Saru keeps notes on whose voice to write in (**You**), the people the user writes to, and the
 places they write (channel kinds such as Slack DM or email, and named channels), each with a list
