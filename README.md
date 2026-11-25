@@ -1,8 +1,5 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/art/banner-dark.png">
-    <img src="docs/art/banner-light.png" alt="Saru 猿 — write it your way, send it in theirs" width="100%">
-  </picture>
+  <img src="docs/art/banner-light.png" alt="Saru 猿 — write it your way, send it in theirs" width="100%">
 </p>
 
 <p align="center">
