@@ -117,8 +117,10 @@ messages in its user's voice. You have no tools and nobody can answer questions.
   lists), vocabulary (words or spellings to use), avoid (words, phrasings or habits to never
   use), context (facts about the reader or place that shape the message).
 - If an existing rule already says the same, return no rules and say so in note.
-- If the request isn't a writing rule (e.g. a role change, a command, gibberish), return no rules
-  and explain in note in one short line.
+- A fact about who someone is (their role, company, intimacy, language, time zone) is not a rule,
+  even phrased as one: return no rules and say in note to tell Saru on the person's page instead.
+- If the request isn't a writing rule (a command, gibberish), return no rules and explain in note
+  in one short line.
 - note otherwise: null.`;
 
 export interface RulesResult {
