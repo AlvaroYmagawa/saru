@@ -167,6 +167,12 @@ same notes:
 "Reply to Hana on Slack: …" is polished with Hana's and the channel's rules, and "add a rule for
 Hana: numbered lists for decisions" saves it to Saru.
 
+**The send guard.** The plugin also stops Claude from sending a message Saru didn't write. Any Slack
+message, Notion comment or Gmail email that a tool is about to send is checked: unless its text
+went through `saru:polish` in the last 24 hours, the send is refused and Claude is told to polish it
+first and show you. To send your own words unchanged, ask for it: Claude marks them as yours with
+`saru mark`. `SARU_GUARD=off` turns the guard off.
+
 ## Settings file
 
 `~/.config/saru/config.json` (or `$SARU_CONFIG`). The app writes it; every field is optional.

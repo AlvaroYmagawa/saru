@@ -10,6 +10,7 @@ import { contentItemCount, importPerson, importTarget } from "../core/migrate";
 import { CHANNEL_KINDS, type ChannelKind } from "../core/schema";
 import { FileStore } from "../core/store";
 import { DataSync } from "../core/sync";
+import { mark } from "../core/guard";
 
 const USAGE = `saru <command>
 
@@ -22,7 +23,9 @@ const USAGE = `saru <command>
   polish --app <app> --title <title> --draft <text>
   add-rule --person <slug> | --channel <id> | --profile  <request>
   tell <sentence>              change a person's details, or add someone
-  sync                         connect the data folder to the configured repo and push`;
+  sync                         connect the data folder to the configured repo and push
+  mark [text]                  mark a message as written by Saru (text, or stdin) so the
+                               send guard lets a tool send it`;
 
 async function main(): Promise<number> {
   const [cmd, ...rest] = process.argv.slice(2);
@@ -32,6 +35,14 @@ async function main(): Promise<number> {
     case "path":
       console.log(store.dir);
       return 0;
+    case "mark": {
+      let text = rest.join(" ");
+      if (!text.trim()) for await (const chunk of process.stdin) text += chunk;
+      if (!text.trim()) throw new Error("nothing to mark: pass the message as text or on stdin");
+      await mark(text);
+      console.log("marked");
+      return 0;
+    }
     case "context":
       return context(store, rest);
     case "migrate":

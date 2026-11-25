@@ -20,6 +20,7 @@ $SARU context --channel <where> [--to "Name, Name"]   # everything a polish need
 $SARU add-rule --person <slug> | --channel <id> | --profile "<rule in a sentence>"
 $SARU tell "<a sentence about a person>"              # change a person's details, or add one
 $SARU path                                             # where the notes live
+$SARU mark                                             # (stdin) mark a polished message as sendable
 ```
 
 `<where>` is `slack-dm`, `slack-channel`, `email`, `whatsapp`, `other`, or a named channel such as
@@ -52,6 +53,17 @@ rules file alone.
    - Plain text inside the block (no Markdown: Slack shows it literally).
    - If the polish worked against a person's stored intimacy, add one line: *"Heads up — <name>'s
      notes say intimacy X but this read more like Y. Want me to update?"*
+5. **Mark it**, every time you produce a copy block, with the exact message:
+
+   ```sh
+   $SARU mark <<'SARU_MSG'
+   <the whole message>
+   SARU_MSG
+   ```
+
+   Saru's send guard refuses any Slack, Notion-comment or Gmail send whose text wasn't marked.
+   Send exactly the marked text (adding mention markup is fine). If the user asks to send their own
+   words unchanged, mark those words instead; that's their call.
 
 ## Replying in a thread
 

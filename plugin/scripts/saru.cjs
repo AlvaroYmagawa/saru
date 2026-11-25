@@ -29,8 +29,8 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 
 // src/cli/saru.ts
-var import_node_fs5 = require("node:fs");
-var import_node_path4 = __toESM(require("node:path"));
+var import_node_fs6 = require("node:fs");
+var import_node_path5 = __toESM(require("node:path"));
 var import_node_util = require("node:util");
 
 // src/core/agents.ts
@@ -990,10 +990,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path5) {
-  if (!path5)
+function getElementAtPath(obj, path6) {
+  if (!path6)
     return obj;
-  return path5.reduce((acc, key) => acc?.[key], obj);
+  return path6.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -1333,11 +1333,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path5, issues) {
+function prefixIssues(path6, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path5);
+    iss.path.unshift(path6);
     return iss;
   });
 }
@@ -1799,16 +1799,16 @@ function flattenError(error62, mapper = (issue2) => issue2.message) {
 }
 function formatError(error62, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error63, path5 = []) => {
+  const processError = (error63, path6 = []) => {
     for (const issue2 of error63.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path5, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path6, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path6, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path6, ...issue2.path]);
       } else {
-        const fullpath = [...path5, ...issue2.path];
+        const fullpath = [...path6, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -1847,17 +1847,17 @@ function formatError(error62, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error62, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error63, path5 = []) => {
+  const processError = (error63, path6 = []) => {
     var _a3;
     for (const issue2 of error63.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path5, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path6, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path6, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path6, ...issue2.path]);
       } else {
-        const fullpath = [...path5, ...issue2.path];
+        const fullpath = [...path6, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -1896,8 +1896,8 @@ function treeifyError(error62, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path5 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path5) {
+  const path6 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path6) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -19035,13 +19035,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path5 = ref.slice(1).split("/").filter(Boolean);
-  if (path5.length === 0) {
+  const path6 = ref.slice(1).split("/").filter(Boolean);
+  if (path6.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path5[0] === defsKey) {
-    const key = path5[1] === void 0 ? void 0 : decodeJSONPointerSegment(path5[1]);
+  if (path6[0] === defsKey) {
+    const key = path6[1] === void 0 ? void 0 : decodeJSONPointerSegment(path6[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -20912,6 +20912,41 @@ var DataSync = class {
   }
 };
 
+// src/core/guard.ts
+var import_node_crypto = require("node:crypto");
+var import_node_fs5 = require("node:fs");
+var import_node_os3 = __toESM(require("node:os"));
+var import_node_path4 = __toESM(require("node:path"));
+var MARK_TTL_MS = 24 * 60 * 60 * 1e3;
+var MAX_MARKS = 300;
+function marksFile() {
+  return process.env.SARU_MARKS_FILE ?? import_node_path4.default.join(import_node_os3.default.homedir(), ".local", "state", "saru", "polished.json");
+}
+function normalise2(text) {
+  return text.replace(/<mention[^>]*\/?>(?:<\/mention>)?/gi, " ").replace(/<[@#!][^>]*>/g, " ").replace(/<\/?[a-z][^>]*>/gi, " ").replace(/&nbsp;|&amp;|&lt;|&gt;|&quot;|&#39;/g, " ").replace(/@[\p{Lu}][\p{L}'’.-]*(?:[  ][\p{Lu}][\p{L}'’.-]*){0,2}/gu, " ").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
+function fingerprint(text) {
+  return (0, import_node_crypto.createHash)("sha256").update(normalise2(text)).digest("hex");
+}
+async function readMarks(file2 = marksFile()) {
+  try {
+    return JSON.parse(await import_node_fs5.promises.readFile(file2, "utf8"));
+  } catch {
+    return {};
+  }
+}
+async function mark(text, now = Date.now(), file2 = marksFile()) {
+  const marks = await readMarks(file2);
+  const fp = fingerprint(text);
+  marks[fp] = now;
+  const kept = Object.entries(marks).filter(([, at]) => now - at < MARK_TTL_MS).sort((a, b) => b[1] - a[1]).slice(0, MAX_MARKS);
+  await import_node_fs5.promises.mkdir(import_node_path4.default.dirname(file2), { recursive: true });
+  const tmp = `${file2}.${process.pid}.tmp`;
+  await import_node_fs5.promises.writeFile(tmp, JSON.stringify(Object.fromEntries(kept)));
+  await import_node_fs5.promises.rename(tmp, file2);
+  return fp;
+}
+
 // src/cli/saru.ts
 var USAGE = `saru <command>
 
@@ -20924,7 +20959,9 @@ var USAGE = `saru <command>
   polish --app <app> --title <title> --draft <text>
   add-rule --person <slug> | --channel <id> | --profile  <request>
   tell <sentence>              change a person's details, or add someone
-  sync                         connect the data folder to the configured repo and push`;
+  sync                         connect the data folder to the configured repo and push
+  mark [text]                  mark a message as written by Saru (text, or stdin) so the
+                               send guard lets a tool send it`;
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const settings = await loadSettings();
@@ -20933,6 +20970,14 @@ async function main() {
     case "path":
       console.log(store.dir);
       return 0;
+    case "mark": {
+      let text = rest.join(" ");
+      if (!text.trim()) for await (const chunk of process.stdin) text += chunk;
+      if (!text.trim()) throw new Error("nothing to mark: pass the message as text or on stdin");
+      await mark(text);
+      console.log("marked");
+      return 0;
+    }
     case "context":
       return context(store, rest);
     case "migrate":
@@ -20987,8 +21032,8 @@ async function pushIfConfigured(store, repo) {
 }
 function rulesFile() {
   const rel = ["skills", "polish", "references", "rules.md"];
-  const inPlugin = import_node_path4.default.join(__dirname, "..", ...rel);
-  return (0, import_node_fs5.existsSync)(inPlugin) ? inPlugin : import_node_path4.default.join(__dirname, "..", "plugin", ...rel);
+  const inPlugin = import_node_path5.default.join(__dirname, "..", ...rel);
+  return (0, import_node_fs6.existsSync)(inPlugin) ? inPlugin : import_node_path5.default.join(__dirname, "..", "plugin", ...rel);
 }
 async function context(store, args) {
   const { values } = (0, import_node_util.parseArgs)({ args, options: { channel: { type: "string" }, to: { type: "string" } } });
@@ -21017,9 +21062,9 @@ async function migrate(store, args) {
   let ok = 0;
   let lost = 0;
   const report = [];
-  const peopleDir = import_node_path4.default.join(values.from, "people");
-  for (const name of (await import_node_fs5.promises.readdir(peopleDir).catch(() => [])).filter((n) => n.endsWith(".md")).sort()) {
-    const text = await import_node_fs5.promises.readFile(import_node_path4.default.join(peopleDir, name), "utf8");
+  const peopleDir = import_node_path5.default.join(values.from, "people");
+  for (const name of (await import_node_fs6.promises.readdir(peopleDir).catch(() => [])).filter((n) => n.endsWith(".md")).sort()) {
+    const text = await import_node_fs6.promises.readFile(import_node_path5.default.join(peopleDir, name), "utf8");
     const { value, unmapped } = importPerson(name.slice(0, -3), text);
     const before = contentItemCount(text);
     const after = value.rules.length + (value.about ? value.about.split("\n\n").length : 0);
@@ -21028,10 +21073,10 @@ async function migrate(store, args) {
     if (!dry) await store.savePerson(value);
     ok++;
   }
-  const targetsDir = import_node_path4.default.join(values.from, "targets");
-  for (const name of (await import_node_fs5.promises.readdir(targetsDir).catch(() => [])).sort()) {
-    const file2 = import_node_path4.default.join(targetsDir, name, "config.md");
-    const text = await import_node_fs5.promises.readFile(file2, "utf8").catch(() => void 0);
+  const targetsDir = import_node_path5.default.join(values.from, "targets");
+  for (const name of (await import_node_fs6.promises.readdir(targetsDir).catch(() => [])).sort()) {
+    const file2 = import_node_path5.default.join(targetsDir, name, "config.md");
+    const text = await import_node_fs6.promises.readFile(file2, "utf8").catch(() => void 0);
     if (text === void 0) continue;
     const { value, unmapped } = importTarget(name, text);
     const before = contentItemCount(text);
