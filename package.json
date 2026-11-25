@@ -1,0 +1,96 @@
+{
+  "name": "saru",
+  "productName": "Saru",
+  "version": "0.1.0",
+  "description": "Menu-bar app that polishes the message you're writing, tuned to each person and channel",
+  "license": "MIT",
+  "author": "Álvaro Kenzo Ymagawa",
+  "private": true,
+  "main": "dist/main.cjs",
+  "scripts": {
+    "postinstall": "node node_modules/electron/install.js",
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/build.mjs && electron .",
+    "start": "electron .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "e2e": "node scripts/build.mjs && playwright test",
+    "check": "tsc --noEmit && vitest run",
+    "dist": "node scripts/build.mjs && electron-builder --mac --publish never",
+    "saru": "node dist/cli.cjs",
+    "art": "electron scripts/art/render.cjs",
+    "demo": "node scripts/build.mjs && electron scripts/art/demo.cjs"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0",
+    "@types/node": "26.6.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "electron": "45.3.0",
+    "electron-builder": "26.18.1",
+    "esbuild": "0.28.2",
+    "react": "19.1.10",
+    "react-dom": "19.1.10",
+    "typescript": "7.0.2",
+    "vitest": "5.1.0"
+  },
+  "trustedDependencies": [
+    "electron"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlvaroYmagawa/saru.git"
+  },
+  "homepage": "https://github.com/AlvaroYmagawa/saru",
+  "build": {
+    "appId": "io.github.alvaroymagawa.saru",
+    "productName": "Saru",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**",
+      "package.json",
+      "!dist/**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "plugin/skills/polish/references/rules.md",
+        "to": "plugin/skills/polish/references/rules.md"
+      },
+      {
+        "from": "resources",
+        "to": "resources",
+        "filter": [
+          "trayTemplate*.png"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "hardenedRuntime": false,
+      "extendInfo": {
+        "LSUIElement": true,
+        "NSAppleEventsUsageDescription": "Saru asks System Events to copy the message you are writing and paste the polished one back."
+      }
+    },
+    "dmg": {
+      "title": "Saru ${version}"
+    },
+    "artifactName": "${productName}-${version}-${arch}.${ext}"
+  }
+}

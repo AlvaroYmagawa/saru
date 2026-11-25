@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Saru">
+  <!-- Saru's mark: a monkey head painted in one brush mass. Colours come from --m-dark / --m-light;
+       set --f-brush and --f-soft to none for a clean silhouette at small sizes. -->
+  <defs>
+    <filter id="saru-brush" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="9" xChannelSelector="R" yChannelSelector="G" result="edge"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.5 0.03" numOctaves="2" seed="3" result="streak"/>
+      <feColorMatrix in="streak" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -3 2.55" result="mask"/>
+      <feComposite in="edge" in2="mask" operator="in"/>
+    </filter>
+    <filter id="saru-brush-soft" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="11" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+  <g style="filter: var(--f-brush, url(#saru-brush))" fill="var(--m-dark, #5a2a16)">
+    <path d="M206 150 C 214 96, 262 58, 326 30 C 304 72, 302 104, 336 150 Z"/>
+    <path d="M256 112 C 344 112, 398 176, 398 262 C 398 344, 356 414, 296 442 C 272 452, 240 452, 216 442 C 156 414, 114 344, 114 262 C 114 176, 168 112, 256 112 Z"/>
+    <path d="M118 236 l -22 4 l 18 12 l -24 10 l 22 8 l -18 14 l 28 2 Z"/>
+    <path d="M394 236 l 22 4 l -18 12 l 24 10 l -22 8 l 18 14 l -28 2 Z"/>
+    <circle cx="96" cy="270" r="44"/>
+    <circle cx="416" cy="270" r="44"/>
+  </g>
+  <g style="filter: var(--f-soft, url(#saru-brush-soft))" fill="var(--m-light, #e4c7a1)">
+    <circle cx="100" cy="272" r="22"/>
+    <circle cx="412" cy="272" r="22"/>
+    <path d="M256 216 C 232 186, 170 184, 162 238 C 156 278, 190 300, 208 306 C 186 332, 186 382, 222 406 C 240 418, 272 418, 290 406 C 326 382, 326 332, 304 306 C 322 300, 356 278, 350 238 C 342 184, 280 186, 256 216 Z"/>
+  </g>
+  <g style="filter: var(--f-soft, url(#saru-brush-soft))" fill="var(--m-dark, #5a2a16)" stroke="var(--m-dark, #5a2a16)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M172 240 Q 214 210 250 248" fill="none" stroke-width="17"/>
+    <path d="M340 240 Q 298 210 262 248" fill="none" stroke-width="17"/>
+    <path d="M196 262 Q 216 250 238 266 Q 216 276 196 262 Z" stroke-width="3"/>
+    <path d="M316 262 Q 296 250 274 266 Q 296 276 316 262 Z" stroke-width="3"/>
+    <ellipse cx="243" cy="326" rx="7" ry="5"/>
+    <ellipse cx="269" cy="326" rx="7" ry="5"/>
+    <path d="M218 366 Q 256 390 294 366" fill="none" stroke-width="9"/>
+  </g>
+</svg>
