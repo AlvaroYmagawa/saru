@@ -19,8 +19,9 @@ write your draft and press the shortcut:
    **who** it's for and **where** it's going, and puts your clipboard back.
 2. Your own [Claude Code](https://code.claude.com) rewrites it using Saru's notes: your voice, that
    person's rules, and the channel's rules (an email isn't a Slack DM, and a DM isn't `#general`).
-3. A panel shows your original and Saru's version. **Enter** pastes it over your draft. Type a
-   change ("shorter", "warmer") and Enter to rewrite it. **Esc** leaves your draft untouched.
+3. A panel shows your original and Saru's version. **⌘↵** (or the Paste button) pastes it over
+   your draft. Type a change ("shorter", "warmer") and press Enter to rewrite it. A plain Enter
+   never pastes, so a stray keypress can't send your draft. **Esc** leaves your draft untouched.
 
 <p align="center">
   <picture>
@@ -29,8 +30,17 @@ write your draft and press the shortcut:
   </picture>
 </p>
 
-The name nods to the three wise monkeys of Nikkō: *iwazaru* (言わざる), "speak no ill", is the one
-who minds his words.
+### Why a monkey
+
+Saru (猿) is the Japanese word for monkey, and *-zaru* is also an old verb ending meaning "not".
+Carved over a stable door at the Tōshōgū shrine in Nikkō, three monkeys cover their eyes, ears
+and mouth: *mizaru, kikazaru, iwazaru* (見ざる 聞かざる 言わざる), see no ill, hear no ill, speak
+no ill. Saru is the third one, the monkey who minds his words: what leaves your keyboard says what
+you meant, in the way the reader takes it well, and nothing you'd regret.
+
+The panel walks the same three steps. 見 lights when Saru has read where you're writing, 聞 when
+it has gathered what it knows about the person and the place, and 言 when the message is written.
+The colours come from the same carving: verdigris green, lacquer black and gold leaf.
 
 ## 二 · Your notes: people, channels, you
 
@@ -175,5 +185,5 @@ Importing notes from the Markdown format Saru grew out of (`people/*.md`, `targe
 
 <p align="center"><img src="docs/art/icon.png" alt="Saru's app icon" width="96"><br><sub>猿 · <i>saru</i> — monkey</sub></p>
 
-Fonts: Shippori Mincho, IBM Plex Sans and Yuji Syuku, under the SIL Open Font License
+Fonts: Zen Kaku Gothic New and Yuji Syuku, under the SIL Open Font License
 (`resources/fonts`). Saru itself is [MIT](LICENSE).

@@ -46,7 +46,7 @@ test("Pressing + and writing a sentence adds a structured rule straight away", a
   });
   await test.step("The new rule shows up, highlighted, with its category", async () => {
     await expect(l!.main.getByTestId("rule")).toHaveCount(2);
-    await expect(l!.main.locator(".rule.fresh .cat")).toHaveText("avoid");
+    await expect(l!.main.getByTestId("rules-avoid").locator(".rule.fresh")).toHaveCount(1);
   });
   await test.step("It is saved in Hana's file", async () => {
     const hana = readJson(l!, "people/hana-mori.json");

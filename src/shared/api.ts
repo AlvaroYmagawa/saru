@@ -7,6 +7,13 @@ export type { Channel, Person, Profile, Rule, RuleCategory, Settings, SyncStatus
 
 export interface PanelState {
   phase: "loading" | "ready" | "changing" | "error";
+  /**
+   * The three monkeys, in order: see (Saru read the window), hear (it gathered the person's and
+   * the channel's rules), speak (the message is written). The last one reached; error stops there.
+   */
+  stage?: "see" | "hear" | "speak";
+  /** The app Saru pastes into, e.g. "Slack". */
+  app?: string;
   original: string;
   /** Where Saru thinks it's going, e.g. "Slack DM · Hana Mori". */
   channel: string;

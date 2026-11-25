@@ -33,7 +33,8 @@ export class Polisher {
 
   constructor(private readonly store: FileStore, private readonly env: AgentEnv) {}
 
-  async draft(window: WindowContext, text: string): Promise<Draft> {
+  /** `onStage("hear")` fires once the notes are gathered, before Claude writes. */
+  async draft(window: WindowContext, text: string, onStage?: (stage: "hear") => void): Promise<Draft> {
     const draft = text.trim();
     if (!draft) throw new ClaudeError("empty", "Nothing to polish: the message box is empty.");
     this.sessionId = undefined;
@@ -41,6 +42,7 @@ export class Polisher {
       this.store.getProfile(), this.store.listChannels(), this.store.listPeople(),
     ]);
     const ctx = buildContext(window, profile, channels.items, people.items);
+    onStage?.("hear");
     this.channelLabel = window.name ? `${KIND_LABELS[window.kind]} · ${window.name}` : KIND_LABELS[window.kind];
     return this.call(polishPrompt(ctx, draft));
   }

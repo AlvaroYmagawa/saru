@@ -96,6 +96,8 @@ function showPanel(): void {
   const { x, y, width } = display.workArea;
   win.setPosition(Math.round(x + (width - 560) / 2), Math.round(y + 120));
   win.show();
+  // Take focus from the app you're writing in, so no key you press next reaches it.
+  if (!E2E) app.focus({ steal: true });
   win.focus();
 }
 
@@ -122,21 +124,26 @@ async function startPolish(): Promise<void> {
   try {
     focused = await os.captureFocused(settings.keystrokeDelayMs);
   } catch (e) {
-    setPanel({ phase: "error", original: "", channel: "", error: `Couldn't read the message box: ${errorText(e)}` });
+    setPanel({ phase: "error", original: "", channel: "", stage: undefined, error: `Couldn't read the message box: ${errorText(e)}` });
     showPanel();
     return;
   }
   target = { app: focused.app };
   const win = parseWindow(focused.app, focused.title);
   const channel = win.name ? `${labelFor(win.kind)} · ${win.name}` : labelFor(win.kind);
-  setPanel({ phase: "loading", original: focused.text, channel });
+  const base = { original: focused.text, channel, app: focused.app };
+  setPanel({ ...base, phase: "loading", stage: "see" });
   showPanel();
+  let stage: PanelState["stage"] = "see";
   try {
     polisher = new Polisher(store, agentEnv());
-    const d = await polisher.draft(win, focused.text);
-    setPanel({ phase: "ready", original: focused.text, channel: d.channel, message: d.message, recipient: d.recipient, note: d.note });
+    const d = await polisher.draft(win, focused.text, (s) => {
+      stage = s;
+      setPanel({ ...base, phase: "loading", stage: s });
+    });
+    setPanel({ ...base, phase: "ready", stage: "speak", channel: d.channel, message: d.message, recipient: d.recipient, note: d.note });
   } catch (e) {
-    setPanel({ phase: "error", original: focused.text, channel, error: errorText(e) });
+    setPanel({ ...base, phase: "error", stage, error: errorText(e) });
   }
 }
 

@@ -49,11 +49,11 @@ function ShortcutRecorder({ value, onChange }: { value: string; onChange(v: stri
     };
   }, [listening]);
   return (
-    <div className="row">
-      <button className={`btn field recorder${listening ? " listening" : ""}`} data-testid="shortcut" onClick={() => setListening((l) => !l)}>
+    <div className="actions">
+      <button className={`btn recorder${listening ? " listening" : ""}`} data-testid="shortcut" onClick={() => setListening((l) => !l)}>
         {listening ? "Press the new shortcut…" : prettyShortcut(value)}
       </button>
-      <span className="hint">{listening ? "Esc to cancel" : "Click, then press the keys you want"}</span>
+      <span className="label">{listening ? "Esc cancels" : "Click, then press the keys you want"}</span>
     </div>
   );
 }
@@ -76,55 +76,57 @@ export function SettingsPage({ sync }: { sync?: SyncStatus }) {
   };
 
   return (
-    <div className="page single">
-      <section className="detail">
-        <h1>Settings</h1>
-        <p className="lede">How Saru starts, which Claude it runs, and where your notes live.</p>
-
-        <div className="section">
-          <div className="section-head"><span className="kicker">Shortcut</span><span className="rule-line" /></div>
-          <ShortcutRecorder value={s.shortcut} onChange={(shortcut) => setS({ ...s, shortcut })} />
+    <main className="sheet">
+      <div className="sheet-inner">
+        <div className="title">
+          <h1>Settings</h1>
+          <p>How Saru starts, which Claude it runs, and where your notes live.</p>
         </div>
 
-        <div className="section">
-          <div className="section-head"><span className="kicker">Claude</span><span className="rule-line" /></div>
+        <section className="block">
+          <div className="block-head"><h3>Shortcut</h3><span className="hint">Starts a polish in any app</span></div>
+          <ShortcutRecorder value={s.shortcut} onChange={(shortcut) => setS({ ...s, shortcut })} />
+          <p className="label">In the panel, <kbd>⌘↵</kbd> or the Paste button pastes Saru's version. Enter alone never pastes, so it can't send your draft by accident.</p>
+        </section>
+
+        <section className="block">
+          <div className="block-head"><h3>Claude</h3><span className="hint">Your own Claude Code, on your account</span></div>
           <div className="grid">
             <label>
-              Model
+              <span className="label">Model</span>
               <select className="field" data-testid="model" value={s.model} onChange={(e) => void save({ model: e.target.value })}>
                 {["sonnet", "opus", "haiku"].concat(["sonnet", "opus", "haiku"].includes(s.model) ? [] : [s.model]).map((m) => <option key={m}>{m}</option>)}
               </select>
             </label>
-            <Field label="Path to claude" value={s.claudePath} placeholder="found automatically" onSave={(v) => void save({ claudePath: v.trim() })} />
+            <Field label="Path to claude" value={s.claudePath} placeholder="Found automatically" onSave={(v) => void save({ claudePath: v.trim() })} />
             <Field label="Give up after (seconds)" value={String(s.timeoutSeconds)} onSave={(v) => Number(v) > 0 && void save({ timeoutSeconds: Number(v) })} />
           </div>
-          <p className="hint">Saru runs your own Claude Code, signed in with your own account. It never sees your credentials.</p>
-        </div>
+        </section>
 
-        <div className="section">
-          <div className="section-head"><span className="kicker">Your data</span><span className="rule-line" /></div>
+        <section className="block">
+          <div className="block-head"><h3>Your notes</h3><span className="hint">Kept in a private GitHub repo</span></div>
           {sync?.state === "refused" || sync?.state === "error" ? <div className="banner" data-testid="sync-banner">{sync.message}</div> : null}
-          {sync?.state === "idle" && sync.message ? <div className="banner">{sync.message}</div> : null}
+          {sync?.state === "idle" && sync.message ? <div className="banner info">{sync.message}</div> : null}
           <div className="grid">
-            <Field label="Private GitHub repo (owner/name)" value={s.dataRepo} testId="data-repo" placeholder="you/saru-data — empty: no sync" onSave={(v) => void save({ dataRepo: v.trim() })} />
-            <Field label="Data folder" value={s.dataDir} placeholder="~/.local/share/saru" onSave={(v) => void save({ dataDir: v.trim() })} />
+            <Field label="Private repo (owner/name)" value={s.dataRepo} testId="data-repo" placeholder="you/saru-data" onSave={(v) => void save({ dataRepo: v.trim() })} />
+            <Field label="Folder on this Mac" value={s.dataDir} placeholder="~/.local/share/saru" onSave={(v) => void save({ dataDir: v.trim() })} />
           </div>
-          <div className="row" style={{ marginTop: 10 }}>
+          <div className="actions">
             <button className="btn" data-testid="sync-now" disabled={!s.dataRepo} onClick={async () => { const r = await saru.syncNow(); toast.show(r.state === "idle" ? "Synced." : r.message ?? r.state, { bad: r.state !== "idle" }); }}>Sync now</button>
-            <span className="hint" data-testid="sync-state">{sync?.state === "idle" && sync.lastSyncAt ? `Last synced ${new Date(sync.lastSyncAt).toLocaleString()}` : sync?.state ?? ""}</span>
+            <span className="label" data-testid="sync-state">{sync?.state === "idle" && sync.lastSyncAt ? `Last synced ${new Date(sync.lastSyncAt).toLocaleString()}` : sync?.state === "off" ? "Sync is off" : ""}</span>
           </div>
-          <p className="hint">Each change is committed and pushed with your own git login. Saru refuses a public repo.</p>
-        </div>
+          <p className="label">Each change is committed and pushed with your own git login. Saru refuses a public repo.</p>
+        </section>
 
-        <div className="section">
-          <div className="section-head"><span className="kicker">Permissions</span><span className="rule-line" /></div>
-          <div className="row">
-            <span data-testid="ax">{ax ? "Accessibility: allowed" : "Accessibility: not allowed yet"}</span>
+        <section className="block">
+          <div className="block-head"><h3>Permissions</h3></div>
+          <div className="actions">
+            <span data-testid="ax">{ax ? "Accessibility is allowed." : "Accessibility isn't allowed yet: Saru can't read or paste your message."}</span>
             {!ax ? <button className="btn" onClick={() => void saru.openAccessibility()}>Open System Settings</button> : null}
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </main>
   );
 }
 
@@ -133,7 +135,7 @@ function Field({ label, value, onSave, placeholder, testId }: { label: string; v
   useEffect(() => setV(value), [value]);
   return (
     <label>
-      {label}
+      <span className="label">{label}</span>
       <input className="field" data-testid={testId} value={v} placeholder={placeholder} onChange={(e) => setV(e.target.value)} onBlur={() => v !== value && onSave(v)} onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()} />
     </label>
   );

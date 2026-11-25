@@ -20055,7 +20055,8 @@ var Polisher = class {
   env;
   sessionId;
   channelLabel = "";
-  async draft(window, text) {
+  /** `onStage("hear")` fires once the notes are gathered, before Claude writes. */
+  async draft(window, text, onStage) {
     const draft = text.trim();
     if (!draft) throw new ClaudeError("empty", "Nothing to polish: the message box is empty.");
     this.sessionId = void 0;
@@ -20065,6 +20066,7 @@ var Polisher = class {
       this.store.listPeople()
     ]);
     const ctx = buildContext(window, profile, channels.items, people.items);
+    onStage?.("hear");
     this.channelLabel = window.name ? `${KIND_LABELS[window.kind]} \xB7 ${window.name}` : KIND_LABELS[window.kind];
     return this.call(polishPrompt(ctx, draft));
   }

@@ -10,23 +10,41 @@ test.afterEach(async () => {
 const criterion = (text: string) => test.info().annotations.push({ type: "criterion", description: text });
 const describe = (text: string) => test.info().annotations.push({ type: "description", description: text });
 
-test("A Slack DM draft is polished for Hana and pasted back on Enter", async () => {
+test("A Slack DM draft is polished for Hana; Enter alone never pastes, ⌘↵ does", async () => {
   criterion("R4 — the shortcut reads the message box and the window it's in");
-  criterion("R7 — the panel shows original, draft, recipient and channel; Enter pastes");
-  describe("Presses the shortcut in a pretend Slack DM with Hana Mori and checks the panel, then pastes.");
+  criterion("R7 — the panel shows original, draft, recipient and channel; ⌘↵ or the Paste button pastes");
+  criterion("R24 — a plain Enter never pastes, so the draft can't be sent by accident");
+  describe("Presses the shortcut in a pretend Slack DM with Hana Mori, checks the panel, presses Enter (nothing happens) and then ⌘↵ (pastes).");
   l = await launch();
   await test.step("Press the shortcut in a Slack DM with Hana", async () => trigger(l!));
-  await test.step("The panel shows where it's going, the original and Saru's draft", async () => {
+  await test.step("The three monkeys are lit and the panel shows where it's going, the original and Saru's version", async () => {
     await expect(l!.panel.getByTestId("panel")).toHaveAttribute("data-phase", "ready");
+    await expect(l!.panel.locator(".monkey.done")).toHaveCount(3);
     await expect(l!.panel.getByTestId("panel-channel")).toHaveText("Slack DM · Hana Mori");
     await expect(l!.panel.getByTestId("panel-recipient")).toHaveText("for Hana Mori");
     await expect(l!.panel.getByTestId("panel-original")).toContainText("da pra mover o release");
     await expect(l!.panel.getByTestId("panel-draft")).toContainText("could we move the release to Monday?");
+    await expect(l!.panel.getByTestId("panel-paste")).toHaveText(/Paste into Slack/);
   });
-  await test.step("Enter pastes the draft over the original", async () => {
+  await test.step("Enter alone pastes nothing and says how to paste", async () => {
     await l!.panel.getByTestId("panel-change").press("Enter");
+    await expect(l!.panel.getByTestId("panel-hint")).toContainText("To paste, press ⌘↵");
+    await l!.panel.waitForTimeout(500);
+    expect(pasted(l!)).toEqual([]);
+  });
+  await test.step("⌘↵ pastes Saru's version", async () => {
+    await l!.panel.getByTestId("panel-change").press("Meta+Enter");
     await expect.poll(() => pasted(l!)).toEqual([{ app: "Slack", text: expect.stringContaining("move the release to Monday") }]);
   });
+});
+
+test("The Paste button pastes Saru's version", async () => {
+  criterion("R7 — the panel shows original, draft, recipient and channel; ⌘↵ or the Paste button pastes");
+  l = await launch();
+  await trigger(l);
+  await expect(l.panel.getByTestId("panel")).toHaveAttribute("data-phase", "ready");
+  await l.panel.getByTestId("panel-paste").click();
+  await expect.poll(() => pasted(l!)).toEqual([{ app: "Slack", text: expect.stringContaining("move the release to Monday") }]);
 });
 
 test("Typing a change rewrites the draft in the same conversation", async () => {
@@ -82,7 +100,8 @@ for (const [name, opts, expected] of [
     await trigger(l);
     await expect(l.panel.getByTestId("panel")).toHaveAttribute("data-phase", "error");
     await expect(l.panel.getByTestId("panel-error")).toHaveText(expected);
-    await l.panel.getByTestId("panel-change").press("Enter").catch(() => undefined);
+    await expect(l.panel.getByTestId("panel-paste")).toBeDisabled();
+    await l.panel.keyboard.press("Meta+Enter");
     expect(pasted(l)).toEqual([]);
   });
 }

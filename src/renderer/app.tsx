@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import type { Channel, DataSnapshot, Person, Profile, SaruApi, Settings, SyncStatus } from "../shared/api";
+import type { Channel, DataSnapshot, Person, Profile, SaruApi, SyncStatus } from "../shared/api";
 import { CHANNEL_KINDS, KIND_LABELS } from "../core/schema";
 import { Panel } from "./panel";
 import { RulesEditor } from "./rules";
@@ -16,11 +16,11 @@ const saru = window.saru;
 const n = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
 
 type Tab = "people" | "channels" | "you" | "settings";
-const TABS: { id: Tab; num: string; label: string }[] = [
-  { id: "people", num: "一", label: "People" },
-  { id: "channels", num: "二", label: "Channels" },
-  { id: "you", num: "三", label: "You" },
-  { id: "settings", num: "四", label: "Settings" },
+const TABS: { id: Tab; kanji: string; label: string }[] = [
+  { id: "people", kanji: "人", label: "People" },
+  { id: "channels", kanji: "場", label: "Channels" },
+  { id: "you", kanji: "我", label: "You" },
+  { id: "settings", kanji: "設", label: "Settings" },
 ];
 
 function useData(): DataSnapshot | undefined {
@@ -43,21 +43,18 @@ function App() {
     return saru.onSync(setSync);
   }, []);
 
+  const single = tab === "you" || tab === "settings";
   return (
-    <div className="shell">
-      <nav className="side washi">
-        <div className="brand">
-          <span className="seal lg" aria-hidden>猿</span>
-          <div><b>Saru</b><small>speak no ill</small></div>
-        </div>
+    <div className={`shell${single ? " single" : ""}`}>
+      <nav className="rail" aria-label="Sections">
+        <span className="seal" aria-hidden title="Saru">猿</span>
         {TABS.map((t) => (
-          <button key={t.id} className={`nav${tab === t.id ? " on" : ""}`} data-testid={`tab-${t.id}`} onClick={() => setTab(t.id)}>
-            <span className="num">{t.num}</span>{t.label}
+          <button key={t.id} className={tab === t.id ? "on" : ""} data-testid={`tab-${t.id}`} aria-current={tab === t.id ? "page" : undefined} onClick={() => setTab(t.id)}>
+            <span className="k" aria-hidden>{t.kanji}</span>
+            <span className="t">{t.label}</span>
           </button>
         ))}
-        <div className="foot" data-testid="sync-foot">
-          <SyncLine s={sync} />
-        </div>
+        <div className="sync" data-testid="sync-foot"><SyncLine s={sync} /></div>
       </nav>
       {!data ? <div /> : tab === "people" ? <PeoplePage data={data} /> : tab === "channels" ? <ChannelsPage data={data} /> : tab === "you" ? <YouPage profile={data.profile} /> : <SettingsPage sync={sync} />}
     </div>
@@ -65,10 +62,19 @@ function App() {
 }
 
 export function SyncLine({ s }: { s?: SyncStatus }) {
-  if (!s || s.state === "off") return <span><i className="dot" />Not synced</span>;
+  if (!s || s.state === "off") return <><i className="dot" /><span>Not synced</span></>;
   const cls = s.state === "idle" ? "ok" : s.state === "error" || s.state === "refused" ? "bad" : "busy";
   const text = s.state === "idle" ? `Synced to ${s.repo}` : s.state === "refused" ? "Sync refused" : s.state === "error" ? "Sync failed" : "Syncing…";
-  return <span title={s.message}><i className={`dot ${cls}`} />{text}</span>;
+  return <><i className={`dot ${cls}`} /><span title={s.message}>{text}</span></>;
+}
+
+function Block({ title, hint, action, children }: { title: string; hint?: string; action?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="block">
+      <div className="block-head"><h3>{title}</h3>{hint ? <span className="hint">{hint}</span> : null}{action}</div>
+      {children}
+    </section>
+  );
 }
 
 // ── People ───────────────────────────────────────────────────────────────────────────────────
@@ -110,48 +116,48 @@ function PeoplePage({ data }: { data: DataSnapshot }) {
   };
 
   return (
-    <div className="page">
+    <>
       <aside className="list">
-        <div className="row" style={{ padding: "0 10px" }}>
-          <span className="kicker">{data.people.length === 1 ? "1 person" : `${data.people.length} people`}</span>
-        </div>
-        {data.invalid.length ? <div className="banner" style={{ margin: 10 }}>Skipped {data.invalid.length} file(s) that don't parse: {data.invalid.map((i) => i.file).join(", ")}</div> : null}
+        <div className="list-head"><h2>People</h2><span className="label">{data.people.length === 1 ? "1 person" : `${data.people.length} people`}</span></div>
+        {data.invalid.length ? <div className="banner">Skipped {data.invalid.length} file(s) that don't parse: {data.invalid.map((i) => i.file).join(", ")}</div> : null}
         {groups.map(([org, people]) => (
           <div key={org}>
-            <h4 className="kicker">{org}</h4>
+            <div className="group">{org}</div>
             {people.map((p) => (
               <button key={p.slug} className={`item${person?.slug === p.slug ? " on" : ""}`} data-testid={`person-${p.slug}`} onClick={() => setSelected(p.slug)}>
                 <span className="avatar">{initials(p.fullName)}</span>
                 <span>
-                  <div>{p.fullName}</div>
-                  <div className="sub">{p.role || "—"} · {n(p.rules.length, "rule")}</div>
+                  <div className="name">{p.fullName}</div>
+                  <div className="sub">{p.role || "No role"} · {n(p.rules.length, "rule")}</div>
                 </span>
               </button>
             ))}
           </div>
         ))}
-        {data.people.length === 0 ? <p className="empty" style={{ padding: 10 }}>Nobody yet. Tell Saru about someone below.</p> : null}
+        {data.people.length === 0 ? <p className="empty" style={{ padding: 8 }}>Nobody yet. Tell Saru about someone on the right.</p> : null}
       </aside>
-      <section className="detail">
-        {person ? <PersonDetail key={person.slug} person={person} /> : <h1>People</h1>}
-        <div className="section">
-          <div className="section-head"><span className="kicker">Tell Saru</span><span className="rule-line" /></div>
-          <div className="prompt-box">
-            <input
-              className="field"
-              data-testid="tell"
-              placeholder={person ? `“${person.fullName.split(" ")[0]} is our CFO now”, “new: Ana Lima, legal at Acme, keep it formal”` : "“new: Ana Lima, legal at Acme, keep it formal”"}
-              value={tell}
-              disabled={busy}
-              onChange={(e) => setTell(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && void submitTell()}
-            />
-            <button className="btn primary" data-testid="tell-submit" disabled={busy || !tell.trim()} onClick={() => void submitTell()}>{busy ? "Thinking…" : "Tell"}</button>
-          </div>
-          <div className="hint">Changes a person's details, or adds someone new. Writing rules go in Rules above.</div>
+      <main className="sheet">
+        <div className="sheet-inner">
+          {person ? <PersonDetail key={person.slug} person={person} /> : <div className="title"><h1>People</h1><p>Everyone you write to, and how to write to them.</p></div>}
+          <Block title="Tell Saru" hint="Change someone's details, or add someone new">
+            <div className="adder">
+              <div className="row">
+                <input
+                  className="field"
+                  data-testid="tell"
+                  placeholder={person ? `${person.fullName.split(" ")[0]} is our CFO now` : "New: Ana Lima, legal at Acme, keep it formal"}
+                  value={tell}
+                  disabled={busy}
+                  onChange={(e) => setTell(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && void submitTell()}
+                />
+                <button className="btn primary" data-testid="tell-submit" disabled={busy || !tell.trim()} onClick={() => void submitTell()}>{busy ? "Updating…" : "Tell"}</button>
+              </div>
+            </div>
+          </Block>
         </div>
-      </section>
-    </div>
+      </main>
+    </>
   );
 }
 
@@ -160,58 +166,65 @@ function TextField({ label, value, onSave, testId, placeholder }: { label: strin
   useEffect(() => setV(value ?? ""), [value]);
   return (
     <label>
-      {label}
+      <span className="label">{label}</span>
       <input className="field" data-testid={testId} value={v} placeholder={placeholder} onChange={(e) => setV(e.target.value)} onBlur={() => v !== (value ?? "") && onSave(v)} onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()} />
     </label>
   );
 }
 
+const INTIMACY = ["", "Cold contact", "Polite and tidy", "Regular colleague", "Teammate", "Close friend"];
+
 function Intimacy({ value, onChange }: { value: number | undefined; onChange(n: number | undefined): void }) {
-  const labels = ["", "cold contact", "polite, tidy", "regular colleague", "teammate", "close friend"];
   return (
     <div className="intimacy" data-testid="intimacy">
-      {[1, 2, 3, 4, 5].map((n) => (
-        <button key={n} className={value && n <= value ? "on" : ""} aria-label={`Intimacy ${n}`} onClick={() => onChange(n)} />
+      {[1, 2, 3, 4, 5].map((i) => (
+        <button key={i} className={value && i <= value ? "on" : ""} aria-label={`Intimacy ${i}: ${INTIMACY[i]}`} onClick={() => onChange(i)} />
       ))}
-      <span>{value ? `${value} · ${labels[value]}` : "not set"}</span>
+      <span>{value ? `${value} · ${INTIMACY[value]}` : "Not set"}</span>
     </div>
   );
+}
+
+function AboutField({ value, placeholder, onSave }: { value: string; placeholder?: string; onSave(v: string): void }) {
+  const [v, setV] = useState(value);
+  useEffect(() => setV(value), [value]);
+  return <textarea className="field" value={v} placeholder={placeholder} onChange={(e) => setV(e.target.value)} onBlur={() => v !== value && onSave(v)} />;
 }
 
 function PersonDetail({ person }: { person: Person }) {
   const toast = useToast();
   const save = async (patch: Partial<Person>) => {
-    const next = { ...person, ...patch };
-    const r = await saru.savePerson(next);
+    const r = await saru.savePerson({ ...person, ...patch });
     if (!r.ok) toast.show(r.error, { bad: true });
   };
   const opt = (v: string) => (v.trim() ? v.trim() : undefined);
-  const [about, setAbout] = useState(person.about);
-  useEffect(() => setAbout(person.about), [person.about]);
+  const first = person.fullName.split(" ")[0];
   return (
     <>
-      <h1 data-testid="person-name">{person.fullName}</h1>
-      <p className="lede">{[person.role, person.org].filter(Boolean).join(" · ") || "No role yet"}</p>
-      <div className="grid">
-        <TextField label="Role" value={person.role} testId="person-role" onSave={(v) => void save({ role: opt(v) })} />
-        <TextField label="Org" value={person.org} onSave={(v) => void save({ org: opt(v) })} />
-        <TextField label="Also called" value={person.aliases.join(", ")} onSave={(v) => void save({ aliases: v.split(",").map((s) => s.trim()).filter(Boolean) })} />
-        <TextField label="Writes in" value={person.outputLanguage} placeholder="your default" onSave={(v) => void save({ outputLanguage: opt(v) })} />
-        <TextField label="Native language" value={person.nativeLanguage} onSave={(v) => void save({ nativeLanguage: opt(v) })} />
-        <TextField label="Time zone" value={person.timezone} onSave={(v) => void save({ timezone: opt(v) })} />
+      <div className="title">
+        <h1 data-testid="person-name">{person.fullName}</h1>
+        <p>{[person.role, person.org].filter(Boolean).join(", ") || "No role yet"}</p>
       </div>
-      <div className="section">
-        <div className="section-head"><span className="kicker">Intimacy</span><span className="rule-line" /></div>
-        <Intimacy value={person.intimacy} onChange={(n) => n && void save({ intimacy: n })} />
-      </div>
-      <div className="section">
-        <div className="section-head"><span className="kicker">Who they are</span><span className="rule-line" /></div>
-        <textarea className="field" value={about} onChange={(e) => setAbout(e.target.value)} onBlur={() => about !== person.about && void save({ about })} />
-      </div>
-      <RulesEditor scope={{ type: "person", slug: person.slug }} rules={person.rules} title={`How to write to ${person.fullName.split(" ")[0]}`} hint="No rules yet: press + and say one in a sentence." />
-      <div className="section">
+      <RulesEditor scope={{ type: "person", slug: person.slug }} rules={person.rules} title={`How to write to ${first}`} hint={`No rules for ${first} yet. Press + and say one in a sentence.`} />
+      <Block title="How close you are">
+        <Intimacy value={person.intimacy} onChange={(v) => v && void save({ intimacy: v })} />
+      </Block>
+      <Block title="Details">
+        <div className="grid">
+          <TextField label="Role" value={person.role} testId="person-role" onSave={(v) => void save({ role: opt(v) })} />
+          <TextField label="Org" value={person.org} onSave={(v) => void save({ org: opt(v) })} />
+          <TextField label="Also called" value={person.aliases.join(", ")} onSave={(v) => void save({ aliases: v.split(",").map((s) => s.trim()).filter(Boolean) })} />
+          <TextField label="Reads in" value={person.outputLanguage} placeholder="Your default" onSave={(v) => void save({ outputLanguage: opt(v) })} />
+          <TextField label="Native language" value={person.nativeLanguage} onSave={(v) => void save({ nativeLanguage: opt(v) })} />
+          <TextField label="Time zone" value={person.timezone} onSave={(v) => void save({ timezone: opt(v) })} />
+        </div>
+      </Block>
+      <Block title={`Who ${first} is`}>
+        <AboutField value={person.about} onSave={(about) => void save({ about })} />
+      </Block>
+      <div>
         <button
-          className="btn ghost"
+          className="btn quiet danger"
           data-testid="person-delete"
           onClick={async () => {
             const r = await saru.deletePerson(person.slug);
@@ -219,7 +232,7 @@ function PersonDetail({ person }: { person: Person }) {
             toast.show(`Removed ${person.fullName}.`, { undo: async () => void (await saru.restorePerson(r.value, r.value)) });
           }}
         >
-          Remove {person.fullName.split(" ")[0]}
+          Remove {first}
         </button>
       </div>
     </>
@@ -227,6 +240,11 @@ function PersonDetail({ person }: { person: Person }) {
 }
 
 // ── Channels ─────────────────────────────────────────────────────────────────────────────────
+
+function kindTitle(c: Channel): string {
+  if (c.match) return c.name;
+  return c.kind === "other" ? "Anywhere else" : `Every ${KIND_LABELS[c.kind]}`;
+}
 
 function ChannelsPage({ data }: { data: DataSnapshot }) {
   const toast = useToast();
@@ -252,16 +270,16 @@ function ChannelsPage({ data }: { data: DataSnapshot }) {
   };
 
   return (
-    <div className="page">
+    <>
       <aside className="list">
-        <div className="row" style={{ padding: "0 10px", justifyContent: "space-between" }}>
-          <span className="kicker">Where you write</span>
-          <button className="btn plus" title="Add a channel" data-testid="channel-add" onClick={() => setAdding((a) => !a)}>+</button>
+        <div className="list-head">
+          <h2>Channels</h2>
+          <button className="btn round" title="Add a channel" aria-label="Add a channel" data-testid="channel-add" onClick={() => setAdding((a) => !a)}>+</button>
         </div>
         {adding ? (
-          <div style={{ padding: "8px 10px" }}>
-            <input className="field" style={{ width: "100%" }} autoFocus data-testid="channel-request" disabled={busy} placeholder="“#x-acme-dev, client channel, keep it formal”" value={request} onChange={(e) => setRequest(e.target.value)} onKeyDown={(e) => e.key === "Enter" && void add()} />
-            <div className="hint">{busy ? "Setting it up…" : "Enter to add"}</div>
+          <div className="adder">
+            <input className="field" autoFocus data-testid="channel-request" disabled={busy} placeholder="#x-acme-dev, the client's channel, formal" value={request} onChange={(e) => setRequest(e.target.value)} onKeyDown={(e) => e.key === "Enter" && void add()} />
+            <span className="hint">{busy ? "Adding it…" : "Describe it in a sentence, then Enter"}</span>
           </div>
         ) : null}
         {CHANNEL_KINDS.map((kind) => {
@@ -269,23 +287,25 @@ function ChannelsPage({ data }: { data: DataSnapshot }) {
           const base = data.channels.find((c) => c.id === kind);
           return (
             <div key={kind}>
-              <h4 className="kicker">{KIND_LABELS[kind]}</h4>
-              {base ? <ChannelItem c={base} on={channel?.id === base.id} label={kind === "other" ? "Anywhere else" : `Every ${KIND_LABELS[kind]}`} onClick={() => setSelected(base.id)} /> : null}
-              {named.map((c) => <ChannelItem key={c.id} c={c} on={channel?.id === c.id} label={c.name} onClick={() => setSelected(c.id)} />)}
+              <div className="group">{KIND_LABELS[kind]}</div>
+              {base ? <ChannelItem c={base} on={channel?.id === base.id} onClick={() => setSelected(base.id)} /> : null}
+              {named.map((c) => <ChannelItem key={c.id} c={c} on={channel?.id === c.id} onClick={() => setSelected(c.id)} />)}
             </div>
           );
         })}
       </aside>
-      <section className="detail">{channel ? <ChannelDetail key={channel.id} channel={channel} onDeleted={() => setSelected(channel.kind)} /> : null}</section>
-    </div>
+      <main className="sheet">
+        <div className="sheet-inner">{channel ? <ChannelDetail key={channel.id} channel={channel} onDeleted={() => setSelected(channel.kind)} /> : null}</div>
+      </main>
+    </>
   );
 }
 
-function ChannelItem({ c, on, label, onClick }: { c: Channel; on: boolean; label: string; onClick(): void }) {
+function ChannelItem({ c, on, onClick }: { c: Channel; on: boolean; onClick(): void }) {
   return (
     <button className={`item${on ? " on" : ""}`} data-testid={`channel-${c.id}`} onClick={onClick}>
       <span>
-        <div>{label}</div>
+        <div className="name">{kindTitle(c)}</div>
         <div className="sub">{n(c.rules.length, "rule")}{c.intimacy ? ` · intimacy ${c.intimacy}` : ""}</div>
       </span>
     </button>
@@ -299,30 +319,28 @@ function ChannelDetail({ channel, onDeleted }: { channel: Channel; onDeleted(): 
     const r = await saru.saveChannel({ ...channel, ...patch });
     if (!r.ok) toast.show(r.error, { bad: true });
   };
-  const [about, setAbout] = useState(channel.about);
-  useEffect(() => setAbout(channel.about), [channel.about]);
   return (
     <>
-      <h1 data-testid="channel-name">{isKind ? (channel.kind === "other" ? "Anywhere else" : `Every ${KIND_LABELS[channel.kind]}`) : channel.name}</h1>
-      <p className="lede">{isKind ? "These rules apply to every message of this kind." : `A named ${KIND_LABELS[channel.kind]}: its rules add to “Every ${KIND_LABELS[channel.kind]}”.`}</p>
-      {!isKind ? (
-        <div className="grid">
-          <TextField label="Window title calls it" value={channel.match} onSave={(v) => v.trim() && void save({ match: v.trim(), name: v.trim() })} />
-        </div>
-      ) : null}
-      <div className="section">
-        <div className="section-head"><span className="kicker">Intimacy when nobody is named</span><span className="rule-line" /></div>
-        <Intimacy value={channel.intimacy} onChange={(n) => void save({ intimacy: n })} />
-      </div>
-      <div className="section">
-        <div className="section-head"><span className="kicker">About</span><span className="rule-line" /></div>
-        <textarea className="field" value={about} onChange={(e) => setAbout(e.target.value)} onBlur={() => about !== channel.about && void save({ about })} />
+      <div className="title">
+        <h1 data-testid="channel-name">{kindTitle(channel)}</h1>
+        <p>{isKind ? "These rules apply to every message of this kind." : `Its rules add to those for every ${KIND_LABELS[channel.kind]}.`}</p>
       </div>
       <RulesEditor scope={{ type: "channel", id: channel.id }} rules={channel.rules} title="How to write here" />
       {!isKind ? (
-        <div className="section">
+        <Block title="Window title calls it">
+          <div className="grid"><TextField label="Name in the title" value={channel.match} onSave={(v) => v.trim() && void save({ match: v.trim(), name: v.trim() })} /></div>
+        </Block>
+      ) : null}
+      <Block title="How close the readers are" hint="Used when nobody is named">
+        <Intimacy value={channel.intimacy} onChange={(v) => void save({ intimacy: v })} />
+      </Block>
+      <Block title="About">
+        <AboutField value={channel.about} onSave={(about) => void save({ about })} />
+      </Block>
+      {!isKind ? (
+        <div>
           <button
-            className="btn ghost"
+            className="btn quiet danger"
             data-testid="channel-delete"
             onClick={async () => {
               const r = await saru.deleteChannel(channel.id);
@@ -347,39 +365,34 @@ function YouPage({ profile }: { profile: Profile }) {
     const r = await saru.saveProfile({ ...profile, ...patch });
     if (!r.ok) toast.show(r.error, { bad: true });
   };
-  const [about, setAbout] = useState(profile.about);
-  useEffect(() => setAbout(profile.about), [profile.about]);
   return (
-    <div className="page single">
-      <section className="detail">
-        <h1>{profile.name || "You"}</h1>
-        <p className="lede">Saru writes in your voice. Everything here applies to every message.</p>
-        <div className="grid">
-          <TextField label="Your name" value={profile.name} testId="you-name" onSave={(v) => void save({ name: v.trim() })} />
-          <TextField label="Native language" value={profile.nativeLanguage} placeholder="e.g. pt-BR" onSave={(v) => void save({ nativeLanguage: v.trim() })} />
-          <TextField label="Saru writes in" value={profile.outputLanguage} placeholder="e.g. en-GB" testId="you-output" onSave={(v) => v.trim() && void save({ outputLanguage: v.trim() })} />
+    <main className="sheet">
+      <div className="sheet-inner">
+        <div className="title">
+          <h1>{profile.name || "You"}</h1>
+          <p>Saru writes in your voice. What's here applies to every message.</p>
         </div>
-        <div className="section">
-          <div className="section-head"><span className="kicker">About you</span><span className="rule-line" /></div>
-          <textarea className="field" placeholder="“Tech lead at a London software house. Dry, direct, warm where it counts.”" value={about} onChange={(e) => setAbout(e.target.value)} onBlur={() => about !== profile.about && void save({ about })} />
-        </div>
-        <RulesEditor scope={{ type: "profile" }} rules={profile.rules} title="Your rules" hint="Rules for every message, e.g. “never use exclamation marks”." />
-      </section>
-    </div>
+        <RulesEditor scope={{ type: "profile" }} rules={profile.rules} title="Your rules" hint="Rules for every message, such as “never use exclamation marks”." />
+        <Block title="Your voice">
+          <div className="grid">
+            <TextField label="Your name" value={profile.name} testId="you-name" onSave={(v) => void save({ name: v.trim() })} />
+            <TextField label="Native language" value={profile.nativeLanguage} placeholder="pt-BR" onSave={(v) => void save({ nativeLanguage: v.trim() })} />
+            <TextField label="Saru writes in" value={profile.outputLanguage} placeholder="en-GB" testId="you-output" onSave={(v) => v.trim() && void save({ outputLanguage: v.trim() })} />
+          </div>
+        </Block>
+        <Block title="About you">
+          <AboutField value={profile.about} placeholder="Tech lead at a London software house. Dry, direct, warm where it counts." onSave={(about) => void save({ about })} />
+        </Block>
+      </div>
+    </main>
   );
 }
 
 // ── Mount ────────────────────────────────────────────────────────────────────────────────────
 
 function Root() {
-  const ref = useRef(false);
-  if (!ref.current) {
-    document.body.classList.toggle("panel", saru.view === "panel");
-    ref.current = true;
-  }
+  document.body.classList.toggle("panel", saru.view === "panel");
   return <ToastHost>{saru.view === "panel" ? <Panel /> : <App />}</ToastHost>;
 }
 
 createRoot(document.getElementById("root")!).render(<Root />);
-
-export type { Settings };
