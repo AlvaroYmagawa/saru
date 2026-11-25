@@ -37,6 +37,17 @@ const RAW: z.input<typeof Channel>[] = [
     ],
   },
   {
+    id: "notion",
+    kind: "notion",
+    name: "Notion comment",
+    about: "A comment in a Notion thread: read next to the page, often by a client.",
+    rules: [
+      { id: "notion0001", category: "format", text: "Reply to the latest comment first, then give the update." },
+      { id: "notion0002", category: "format", text: "Keep every @mention exactly as written in the draft." },
+      { id: "notion0003", category: "format", text: "Short paragraphs; one topic each." },
+    ],
+  },
+  {
     id: "whatsapp",
     kind: "whatsapp",
     name: "WhatsApp",

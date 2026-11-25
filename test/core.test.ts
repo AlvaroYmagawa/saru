@@ -17,7 +17,7 @@ describe("R2 — data is stored as validated, structured files", () => {
     await s.ensureSeed();
     await s.ensureSeed();
     const ch = await s.listChannels();
-    expect(ch.items.map((c) => c.id).sort()).toEqual(["email", "other", "slack-channel", "slack-dm", "whatsapp"]);
+    expect(ch.items.map((c) => c.id).sort()).toEqual(["email", "notion", "other", "slack-channel", "slack-dm", "whatsapp"]);
     expect((await s.getProfile()).outputLanguage).toBe("en-GB");
   });
 
@@ -143,5 +143,20 @@ describe("R6 — the prompt carries the right rules", () => {
     expect(findPeople("HM", people)).toHaveLength(1);
     expect(findPeople("Hana", people)).toHaveLength(1);
     expect(findPeople("Bruno", people)).toHaveLength(0);
+  });
+});
+
+describe("R25 — @mentions survive the polish", () => {
+  it("finds mentions, including full names, and reports the ones the message lost", async () => {
+    const { mentionsIn, missingMentions } = await import("../src/core/agents");
+    const draft = "Hi @Rob Marriott ,\n\nGlad to hear that. cc @Ana and @Bo Chen";
+    expect(mentionsIn(draft)).toEqual(["@Rob Marriott", "@Ana", "@Bo Chen"]);
+    expect(missingMentions(draft, "Hi @Rob Marriott, cc @Ana and @Bo Chen")).toEqual([]);
+    expect(missingMentions(draft, "Hi @Anonymous, cc @Ana and Bo")).toEqual(["@Rob Marriott", "@Bo Chen"]);
+  });
+
+  it("recognises a Notion window as a Notion comment", () => {
+    expect(parseWindow("Notion", "Release plan").kind).toBe("notion");
+    expect(parseWindow("Google Chrome", "Release plan | Notion").kind).toBe("notion");
   });
 });

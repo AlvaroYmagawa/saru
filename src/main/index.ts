@@ -148,7 +148,7 @@ async function startPolish(): Promise<void> {
 }
 
 function labelFor(kind: string): string {
-  return ({ "slack-dm": "Slack DM", "slack-channel": "Slack channel", email: "Email", whatsapp: "WhatsApp", other: "Anywhere else" } as Record<string, string>)[kind] ?? kind;
+  return ({ "slack-dm": "Slack DM", "slack-channel": "Slack channel", email: "Email", notion: "Notion comment", whatsapp: "WhatsApp", other: "Anywhere else" } as Record<string, string>)[kind] ?? kind;
 }
 
 ipcMain.handle("panel:accept", async () => {

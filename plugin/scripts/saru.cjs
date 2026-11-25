@@ -137,6 +137,7 @@ function parseWindow(app, rawTitle) {
     return withName({ app: appName, title, kind: "slack-channel" }, name && !name.startsWith("#") ? `#${name}` : name);
   }
   if (appLower === "whatsapp" || /(^|\s)WhatsApp\s*$/.test(title)) return { app: appName, title, kind: "whatsapp" };
+  if (appLower === "notion" || /\s[-|–]\s?Notion\s*$/.test(title) || /^Notion\s*[-|–]/.test(title)) return { app: appName, title, kind: "notion" };
   if (EMAIL_APPS.includes(appLower) || /\s-\s(Gmail|Outlook)(\s|$)/.test(title) || /Outlook\s*$/.test(title)) {
     return { app: appName, title, kind: "email" };
   }
@@ -19914,12 +19915,13 @@ var Person = external_exports.object({
   about: external_exports.string().trim().default(""),
   rules: external_exports.array(Rule).default([])
 });
-var CHANNEL_KINDS = ["slack-dm", "slack-channel", "email", "whatsapp", "other"];
+var CHANNEL_KINDS = ["slack-dm", "slack-channel", "email", "notion", "whatsapp", "other"];
 var ChannelKind = external_exports.enum(CHANNEL_KINDS);
 var KIND_LABELS = {
   "slack-dm": "Slack DM",
   "slack-channel": "Slack channel",
   email: "Email",
+  notion: "Notion comment",
   whatsapp: "WhatsApp",
   other: "Anywhere else"
 };
@@ -20046,6 +20048,12 @@ var POLISH_SCHEMA = {
 };
 
 // src/core/agents.ts
+function mentionsIn(text) {
+  return [...text.matchAll(/@([\p{Lu}][\p{L}'’.-]*(?:[ \u00a0][\p{Lu}][\p{L}'’.-]*){0,2})/gu)].map((m) => `@${m[1]}`);
+}
+function missingMentions(draft, message) {
+  return [...new Set(mentionsIn(draft))].filter((m) => !message.includes(m));
+}
 var Polisher = class {
   constructor(store, env) {
     this.store = store;
@@ -20055,11 +20063,13 @@ var Polisher = class {
   env;
   sessionId;
   channelLabel = "";
+  original = "";
   /** `onStage("hear")` fires once the notes are gathered, before Claude writes. */
   async draft(window, text, onStage) {
     const draft = text.trim();
     if (!draft) throw new ClaudeError("empty", "Nothing to polish: the message box is empty.");
     this.sessionId = void 0;
+    this.original = draft;
     const [profile, channels, people] = await Promise.all([
       this.store.getProfile(),
       this.store.listChannels(),
@@ -20093,10 +20103,13 @@ var Polisher = class {
     const v = ans.value;
     if (typeof v.message !== "string" || !v.message.trim()) throw new ClaudeError("invalid-output", "Claude's answer had no message.");
     this.sessionId = ans.sessionId ?? this.sessionId;
+    const lost = missingMentions(this.original, v.message);
+    const modelNote = typeof v.note === "string" && v.note.trim() ? v.note : null;
+    const lostNote = lost.length ? `Check the mention${lost.length > 1 ? "s" : ""}: ${lost.join(", ")} ${lost.length > 1 ? "aren't" : "isn't"} in Saru's version.` : null;
     return {
       message: v.message,
       recipient: typeof v.recipient === "string" && v.recipient.trim() ? v.recipient : null,
-      note: typeof v.note === "string" && v.note.trim() ? v.note : null,
+      note: [lostNote, modelNote].filter(Boolean).join(" ") || null,
       channel: this.channelLabel
     };
   }
@@ -20567,6 +20580,17 @@ var RAW = [
       { id: "email0001", category: "format", text: "Open with a greeting line and close with a short sign-off and your name." },
       { id: "email0002", category: "format", text: "One topic per paragraph; lead with what you need from them." },
       { id: "email0003", category: "context", text: "Make it understandable on its own, since it may be forwarded." }
+    ]
+  },
+  {
+    id: "notion",
+    kind: "notion",
+    name: "Notion comment",
+    about: "A comment in a Notion thread: read next to the page, often by a client.",
+    rules: [
+      { id: "notion0001", category: "format", text: "Reply to the latest comment first, then give the update." },
+      { id: "notion0002", category: "format", text: "Keep every @mention exactly as written in the draft." },
+      { id: "notion0003", category: "format", text: "Short paragraphs; one topic each." }
     ]
   },
   {

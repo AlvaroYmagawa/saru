@@ -68,4 +68,8 @@ Bad news, escalations, letting someone go: careful, not clever. Drop intimacy by
 
 - Always the **whole** message, ready to send, never a fragment, also after a `Change:`.
 - Plain text: no Markdown (`*bold*`, backticks, headers). Lists use `•` or `1.` lines.
-- Names as plain names, never `<@ID>` or `@` mention markup.
+- **@mentions are kept exactly.** Every `@Name` in the draft stays in the message with the same
+  name, spelled the same, in the place it plays in the sentence (usually the greeting). Never drop,
+  translate, shorten or replace one, and never turn a name into `@Anonymous` or a placeholder.
+- Don't add mentions the draft didn't have, and never write `<@ID>`, `<mention …>` or any other
+  markup: the text is pasted into the app, which only links a mention the user types there.

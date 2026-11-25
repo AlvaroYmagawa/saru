@@ -29,6 +29,7 @@ export function parseWindow(app: string, rawTitle: string): WindowContext {
   }
 
   if (appLower === "whatsapp" || /(^|\s)WhatsApp\s*$/.test(title)) return { app: appName, title, kind: "whatsapp" };
+  if (appLower === "notion" || /\s[-|–]\s?Notion\s*$/.test(title) || /^Notion\s*[-|–]/.test(title)) return { app: appName, title, kind: "notion" };
   if (EMAIL_APPS.includes(appLower) || /\s-\s(Gmail|Outlook)(\s|$)/.test(title) || /Outlook\s*$/.test(title)) {
     return { app: appName, title, kind: "email" };
   }

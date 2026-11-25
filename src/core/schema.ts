@@ -36,7 +36,7 @@ export const Person = z.object({
 });
 export type Person = z.infer<typeof Person>;
 
-export const CHANNEL_KINDS = ["slack-dm", "slack-channel", "email", "whatsapp", "other"] as const;
+export const CHANNEL_KINDS = ["slack-dm", "slack-channel", "email", "notion", "whatsapp", "other"] as const;
 export const ChannelKind = z.enum(CHANNEL_KINDS);
 export type ChannelKind = z.infer<typeof ChannelKind>;
 
@@ -44,6 +44,7 @@ export const KIND_LABELS: Record<ChannelKind, string> = {
   "slack-dm": "Slack DM",
   "slack-channel": "Slack channel",
   email: "Email",
+  notion: "Notion comment",
   whatsapp: "WhatsApp",
   other: "Anywhere else",
 };

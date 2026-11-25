@@ -26,10 +26,21 @@ export interface Draft {
   channel: string;
 }
 
+/** `@Name` mentions in a text: up to three capitalised words after an @. */
+export function mentionsIn(text: string): string[] {
+  return [...text.matchAll(/@([\p{Lu}][\p{L}'’.-]*(?:[ \u00a0][\p{Lu}][\p{L}'’.-]*){0,2})/gu)].map((m) => `@${m[1]}`);
+}
+
+/** Mentions the draft had that the polished message lost or changed. */
+export function missingMentions(draft: string, message: string): string[] {
+  return [...new Set(mentionsIn(draft))].filter((m) => !message.includes(m));
+}
+
 /** One polishing conversation: a first draft, then any number of changes on the same session. */
 export class Polisher {
   private sessionId?: string;
   private channelLabel = "";
+  private original = "";
 
   constructor(private readonly store: FileStore, private readonly env: AgentEnv) {}
 
@@ -38,6 +49,7 @@ export class Polisher {
     const draft = text.trim();
     if (!draft) throw new ClaudeError("empty", "Nothing to polish: the message box is empty.");
     this.sessionId = undefined;
+    this.original = draft;
     const [profile, channels, people] = await Promise.all([
       this.store.getProfile(), this.store.listChannels(), this.store.listPeople(),
     ]);
@@ -71,10 +83,14 @@ export class Polisher {
     const v = ans.value;
     if (typeof v.message !== "string" || !v.message.trim()) throw new ClaudeError("invalid-output", "Claude's answer had no message.");
     this.sessionId = ans.sessionId ?? this.sessionId;
+    // A dropped @mention means the person isn't notified: say so, whatever the model wrote.
+    const lost = missingMentions(this.original, v.message);
+    const modelNote = typeof v.note === "string" && v.note.trim() ? v.note : null;
+    const lostNote = lost.length ? `Check the mention${lost.length > 1 ? "s" : ""}: ${lost.join(", ")} ${lost.length > 1 ? "aren't" : "isn't"} in Saru's version.` : null;
     return {
       message: v.message,
       recipient: typeof v.recipient === "string" && v.recipient.trim() ? v.recipient : null,
-      note: typeof v.note === "string" && v.note.trim() ? v.note : null,
+      note: [lostNote, modelNote].filter(Boolean).join(" ") || null,
       channel: this.channelLabel,
     };
   }
