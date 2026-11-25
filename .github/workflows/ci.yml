@@ -38,7 +38,12 @@ jobs:
         with:
           bun-version: 1.4.0
       - run: bun install --frozen-lockfile
-      - name: Build the DMGs (not signed or notarised yet)
+      - name: Load Saru's release signing certificate
+        run: scripts/ci/import-signing-cert.sh
+        env:
+          SARU_CERT_P12: ${{ secrets.SARU_CERT_P12 }}
+          SARU_CERT_PASSWORD: ${{ secrets.SARU_CERT_PASSWORD }}
+      - name: Build the DMGs (signed with Saru's own certificate, not notarised)
         run: bun run dist
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"

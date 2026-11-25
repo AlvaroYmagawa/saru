@@ -20,6 +20,8 @@ export interface PanelState {
   newChannel?: string | null;
   /** What was just added from the panel, shown once. */
   added?: string;
+  /** A fix the panel can offer next to the error. */
+  action?: "open-accessibility";
   original: string;
   /** Where Saru thinks it's going, e.g. "Slack DM · Hana Mori". */
   channel: string;

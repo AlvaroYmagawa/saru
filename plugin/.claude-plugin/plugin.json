@@ -1,5 +1,5 @@
 {
   "name": "saru",
   "description": "Polish messages in Claude Code sessions with Saru's people, channels and rules (the same notes the Saru app uses).",
-  "version": "0.1.0"
+  "version": "0.1.1"
 }
