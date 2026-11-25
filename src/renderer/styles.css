@@ -73,23 +73,23 @@ kbd { font: 500 11.5px/1 var(--sans); border: 1px solid var(--rule); border-bott
 /* ── The seal and the three monkeys ───────────────────────────────── */
 .seal { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 7px; background: var(--shu); color: #f8efe2; font: 24px/1 var(--brush); box-shadow: inset 0 0 0 2px #f8efe233; flex: none; }
 
-.panel-mark { width: 40px; height: 40px; border-radius: 11px; background: var(--mark-bg); display: grid; place-items: center; flex: none; }
-.panel-mark .mark { width: 34px; height: 34px; }
+.panel-mark { width: 44px; height: 44px; border-radius: 11px; background: var(--mark-bg); display: grid; place-items: center; flex: none; }
+.panel-mark .mark { width: 38px; height: 38px; }
 .panel-mark.busy .mark { animation: nod 1.6s ease-in-out infinite; }
 @keyframes nod { 50% { transform: translateY(2px) rotate(-3deg); } }
 
 /* ── Panel ────────────────────────────────────────────────────────── */
 .panel-card { margin: 10px; border-radius: 16px; overflow: hidden; background: var(--sheet); border: 1px solid var(--rule); box-shadow: var(--shadow); display: flex; flex-direction: column; }
 .panel-head { display: flex; align-items: center; gap: 14px; padding: 14px 18px; -webkit-app-region: drag; }
-.panel-head .where { font: 700 15px/1.25 var(--sans); }
-.panel-head .who { font-size: 12.5px; color: var(--muted); }
-.panel-head .step { margin-left: auto; font-size: 12.5px; color: var(--muted); text-align: right; }
+.panel-head .where { font: 700 17px/1.25 var(--sans); }
+.panel-head .who { font-size: 14px; color: var(--muted); }
+.panel-head .step { margin-left: auto; font-size: 14px; color: var(--muted); text-align: right; }
 .panel-body { padding: 0 18px 12px; overflow-y: auto; max-height: 68vh; display: grid; gap: 12px; }
 .yours { background: var(--sheet-2); border-radius: 10px; padding: 10px 12px; }
-.yours .text { white-space: pre-wrap; color: var(--ink-2); font-size: 13px; max-height: 110px; overflow: auto; margin-top: 2px; }
-.saru-version .text { white-space: pre-wrap; font-size: 15.5px; line-height: 1.65; margin-top: 4px; transition: opacity .2s; }
-.note { color: var(--kin); font-size: 13px; margin: 0; }
-.panel .error { color: var(--shu); font-size: 13.5px; white-space: pre-wrap; margin: 0; }
+.yours .text { white-space: pre-wrap; color: var(--ink-2); font-size: 15px; line-height: 1.55; max-height: 130px; overflow: auto; margin-top: 2px; }
+.saru-version .text { white-space: pre-wrap; font-size: 17.5px; line-height: 1.6; margin-top: 4px; transition: opacity .2s; }
+.note { color: var(--kin); font-size: 14.5px; margin: 0; }
+.panel .error { color: var(--shu); font-size: 15px; white-space: pre-wrap; margin: 0; }
 .panel-foot { border-top: 1px solid var(--rule); padding: 12px 18px 14px; display: grid; gap: 10px; background: var(--sheet); }
 .panel-foot .field { width: 100%; }
 .actions { display: flex; align-items: center; gap: 10px; }
@@ -199,3 +199,10 @@ textarea.field { resize: vertical; min-height: 70px; width: 100%; line-height: 1
 .new-row .field { flex: 1; min-width: 200px; }
 .added { color: var(--roku); font-size: 13px; margin: 0; }
 .learning { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+
+/* The panel reads at arm's length: larger labels, field and buttons than the main window. */
+.panel-card .label { font-size: 13.5px; }
+.panel-card .field { font-size: 15.5px; padding: 10px 12px; }
+.panel-card .btn { font-size: 15px; padding: 8px 15px; }
+.panel-card .actions .hint { font-size: 13px; }
+.panel-card .new-here { font-size: 15px; }

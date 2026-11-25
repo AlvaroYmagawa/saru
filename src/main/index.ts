@@ -13,6 +13,8 @@ import type { DataSnapshot, PanelState, Result, ShortcutResult } from "../shared
 import { fakeBridge, macBridge, type OsBridge } from "./macos";
 
 const E2E = process.env.SARU_E2E === "1";
+/** The panel window: the card plus its 10px margin on each side. */
+const PANEL_WIDTH = 640;
 const os: OsBridge = E2E ? fakeBridge() : macBridge;
 
 let settings: Settings;
@@ -70,7 +72,7 @@ function loadView(win: BrowserWindow, view: "panel" | "app"): void {
 function ensurePanel(): BrowserWindow {
   if (panel && !panel.isDestroyed()) return panel;
   panel = new BrowserWindow({
-    width: 560,
+    width: PANEL_WIDTH,
     height: 360,
     show: false,
     frame: false,
@@ -78,9 +80,11 @@ function ensurePanel(): BrowserWindow {
     alwaysOnTop: true,
     fullscreenable: false,
     skipTaskbar: true,
+    // Only the card is drawn: no window material or window shadow behind it (that showed as a
+    // second, grey frame around the card).
     transparent: true,
-    vibrancy: "under-window",
-    visualEffectState: "active",
+    backgroundColor: "#00000000",
+    hasShadow: false,
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), additionalArguments: E2E ? ["--saru-e2e"] : [] },
   });
   panel.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
@@ -95,7 +99,7 @@ function showPanel(): void {
   const win = ensurePanel();
   const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
   const { x, y, width } = display.workArea;
-  win.setPosition(Math.round(x + (width - 560) / 2), Math.round(y + 120));
+  win.setPosition(Math.round(x + (width - PANEL_WIDTH) / 2), Math.round(y + 120));
   win.show();
   // Take focus from the app you're writing in, so no key you press next reaches it.
   if (!E2E) app.focus({ steal: true });
@@ -111,7 +115,7 @@ ipcMain.handle("panel:resize", (_e, height: number) => {
   if (!panel) return;
   const display = screen.getDisplayMatching(panel.getBounds());
   const max = Math.round(display.workArea.height * 0.8);
-  panel.setSize(560, Math.min(max, Math.max(160, Math.round(height))));
+  panel.setSize(PANEL_WIDTH, Math.min(max, Math.max(160, Math.round(height))));
 });
 
 async function startPolish(): Promise<void> {
