@@ -4,6 +4,7 @@ import { app, BrowserWindow, globalShortcut, ipcMain, Menu, nativeImage, nativeT
 import { addChannelByPrompt, addRulesByPrompt, editPersonByPrompt, Polisher, updateRules, type AgentEnv, type RuleScope } from "../core/agents";
 import { channelsFor, findPeople, parseWindow, type WindowContext } from "../core/channel";
 import { editProfileByPrompt, isBlankProfile, learnStyleFromSlack } from "../core/profile";
+import { readNotionCopy, writeNotionCopy, type NotionCopy } from "../core/notion";
 import { ClaudeError, findInLoginShell } from "../core/claude";
 import { DEFAULT_SHORTCUT, loadSettings, resolveDataDir, saveSettings, Settings } from "../core/config";
 import { Channel, Person, Profile, Rule, formatZodError, slugify } from "../core/schema";
@@ -147,12 +148,14 @@ async function startPolish(): Promise<void> {
     return;
   }
   target = { app: focused.app };
-  lastCapture = { win: parseWindow(focused.app, focused.title), text: focused.text, app: focused.app };
+  // Notion puts "@Anonymous" in the plain text; its own data says who each mention is.
+  const notion = focused.custom ? readNotionCopy(focused.custom, (await store.listPeople()).items) : undefined;
+  lastCapture = { win: parseWindow(focused.app, focused.title), text: notion?.text ?? focused.text, app: focused.app, notion };
   showPanel();
   await draftLast();
 }
 
-let lastCapture: { win: WindowContext; text: string; app: string } | undefined;
+let lastCapture: { win: WindowContext; text: string; app: string; notion?: NotionCopy } | undefined;
 
 /** A named place (#channel, group…) the window names that Channels doesn't have yet. */
 async function unknownChannel(win: WindowContext): Promise<string | null> {
@@ -244,7 +247,9 @@ ipcMain.handle("panel:accept", async () => {
   if (!s?.message || !target) return;
   panel?.hide();
   if (!E2E) app.hide();
-  await os.replaceFocused(target.app, s.message, settings.keystrokeDelayMs);
+  // Back into Notion with its own data, so the mentions are real mentions again.
+  const notion = lastCapture?.notion;
+  await os.replaceFocused(target.app, s.message, settings.keystrokeDelayMs, notion ? writeNotionCopy(s.message, notion) : undefined);
   if (E2E) setPanel({ ...s, note: `Pasted into ${target.app}.` });
 });
 
