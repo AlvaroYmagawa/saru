@@ -28,6 +28,7 @@ let polisher: Polisher | undefined;
 let target: { app: string } | undefined;
 let panelState: PanelState | undefined;
 let activeShortcut: string | undefined;
+let askedForTrust = false;
 let watcher: FSWatcher | undefined;
 
 // e2e runs get their own profile, so they start even while the installed Saru is open.
@@ -120,8 +121,20 @@ ipcMain.handle("panel:resize", (_e, height: number) => {
 
 async function startPolish(): Promise<void> {
   if (!E2E && !os.isTrusted(false)) {
-    os.isTrusted(true);
-    setPanel({ phase: "error", original: "", channel: "", error: "Saru needs Accessibility access to read and replace your message. Allow it in System Settings → Privacy & Security → Accessibility, then press the shortcut again." });
+    // macOS's own prompt, once per launch; after that the panel explains.
+    if (!askedForTrust) {
+      askedForTrust = true;
+      os.isTrusted(true);
+    }
+    setPanel({
+      phase: "error",
+      original: "",
+      channel: "",
+      action: "open-accessibility",
+      error:
+        "Saru needs Accessibility access to read and replace your message. Turn Saru on in System Settings → Privacy & Security → Accessibility, then press the shortcut again.\n\n" +
+        "Already on? macOS is holding the permission of another copy of Saru (an older or a different build). Select Saru there, remove it with −, then press the shortcut again and allow it.",
+    });
     showPanel();
     return;
   }

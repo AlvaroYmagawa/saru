@@ -97,7 +97,8 @@ before `bun run dist`.
 1. Saru lives in the menu bar: look for the monkey's head.
 2. macOS asks to let Saru use **Accessibility** and control **System Events**. Allow both in
    System Settings → Privacy & Security; Saru needs them to copy your draft and paste the new one.
-   An unsigned build gets a new identity on every update, so you may have to allow it again.
+   Releases are signed with Saru's own certificate, so the permission survives updates. A build
+   you make yourself is signed differently: switch between the two and you'll need to allow it again.
 3. Saru opens **You**. If Slack is connected to Claude Code, it learns your style from your own
    messages: it can only search and read, and every tool that sends, drafts, reacts or edits is
    denied. No Slack? Tell Saru about yourself in a sentence, or fill in the page.
@@ -207,6 +208,7 @@ See [SECURITY.md](SECURITY.md) to report a problem.
 | Problem | Fix |
 | --- | --- |
 | The panel says it needs Accessibility | System Settings → Privacy & Security → Accessibility → turn on Saru, then press the shortcut again |
+| It still asks although Saru is already on | macOS kept the permission of another copy of Saru: select Saru in that list, remove it with **−**, press the shortcut again and allow it |
 | "Couldn't find the claude command" | install Claude Code, or set its path in Settings |
 | "⌥⌘P is already used by another app" | pick another shortcut in Settings |
 | "Saru is damaged and can't be opened" | `xattr -dr com.apple.quarantine /Applications/Saru.app` |

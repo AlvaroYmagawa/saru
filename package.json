@@ -1,7 +1,7 @@
 {
   "name": "saru",
   "productName": "Saru",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Menu-bar app that polishes the message you're writing, tuned to each person and channel",
   "license": "MIT",
   "author": "Álvaro Kenzo Ymagawa",
@@ -91,6 +91,7 @@
     "dmg": {
       "title": "Saru ${version}"
     },
-    "artifactName": "${productName}-${version}-${arch}.${ext}"
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "afterSign": "scripts/after-sign.cjs"
   }
 }

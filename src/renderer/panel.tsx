@@ -142,6 +142,11 @@ export function Panel() {
         {s.phase === "ready" && s.newPerson ? <NewHere kind="person" name={s.newPerson} /> : null}
         {s.phase === "ready" && s.newChannel ? <NewHere kind="channel" name={s.newChannel} /> : null}
         {s.error ? <p className="error" data-testid="panel-error">{s.error}</p> : null}
+        {s.action === "open-accessibility" ? (
+          <div>
+            <button className="btn" data-testid="panel-open-accessibility" onClick={() => void saru.openAccessibility()}>Open Accessibility settings</button>
+          </div>
+        ) : null}
       </div>
       <div className="panel-foot">
         <input
