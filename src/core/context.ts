@@ -91,8 +91,9 @@ You run inside the Saru app. Nobody can answer a question, and you have no tools
   - message: the complete polished message, plain text.
   - recipient: in a DM, the full name(s) of the person(s) you wrote for (comma separated), or null;
     in a named channel, the channel as #name.
-  - note: one short line the user should see before sending (a best-guess match, nobody matched,
-    the draft read very differently from the stored intimacy), or null.
+  - note: one short line only when the user must check something before sending (a best-guess
+    match, nobody matched, the draft read very differently from the stored intimacy), else null.
+    Never describe what you did (translating, shortening, applying rules).
 `;
 
 export const POLISH_SCHEMA = {
