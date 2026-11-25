@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { launch, readJson, type Launched, close } from "./helpers";
 
 let l: Launched | undefined;
@@ -91,6 +93,8 @@ test("Editing a rule in place saves it; deleting it is undoable", async () => {
   await test.step("Delete it: it's gone from the file", async () => {
     await l!.main.getByTestId("rule").hover();
     await l!.main.getByTestId("rule-delete").click();
+    await expect(l!.main.getByTestId("confirm")).toContainText("Delete this rule?");
+    await l!.main.getByTestId("confirm-ok").click();
     await expect(l!.main.getByTestId("rule")).toHaveCount(0);
     expect(readJson(l!, "people/hana-mori.json").rules).toHaveLength(0);
   });
@@ -131,4 +135,43 @@ test("A named channel can be added by prompt", async () => {
   await l.main.getByTestId("channel-request").press("Enter");
   await expect(l.main.getByTestId("channel-name")).toHaveText("#x-acme-ops");
   expect(readJson(l, "channels/x-acme-ops.json")).toMatchObject({ kind: "slack-channel", match: "#x-acme-ops" });
+});
+
+test("Right-click offers Delete on a person, a channel and a rule, always after a confirmation", async () => {
+  criterion("R31 — anything deletable has a right-click menu with Delete, and deleting asks first");
+  l = await launch();
+  await test.step("Right-click Hana, choose Delete, then cancel: she stays", async () => {
+    await l!.main.getByTestId("person-hana-mori").click({ button: "right" });
+    await l!.main.getByTestId("context-menu").getByRole("menuitem", { name: "Delete Hana Mori…" }).click();
+    await expect(l!.main.getByTestId("confirm")).toContainText("Delete Hana Mori?");
+    await l!.main.getByTestId("confirm-cancel").click();
+    await expect(l!.main.getByTestId("confirm")).toHaveCount(0);
+    expect(existsSync(path.join(l!.dataDir, "people", "hana-mori.json"))).toBe(true);
+  });
+  await test.step("Right-click a rule and delete it after confirming", async () => {
+    await l!.main.getByTestId("rule").click({ button: "right" });
+    await l!.main.getByTestId("context-menu").getByRole("menuitem", { name: "Delete rule…" }).click();
+    await l!.main.getByTestId("confirm-ok").click();
+    await expect(l!.main.getByTestId("rule")).toHaveCount(0);
+    expect(readJson(l!, "people/hana-mori.json").rules).toHaveLength(0);
+  });
+  await test.step("Right-click Hana again and confirm: she's deleted", async () => {
+    await l!.main.getByTestId("person-hana-mori").click({ button: "right" });
+    await l!.main.getByTestId("context-menu").getByRole("menuitem", { name: "Delete Hana Mori…" }).click();
+    await l!.main.getByTestId("confirm-ok").click();
+    await expect(l!.main.getByTestId("person-hana-mori")).toHaveCount(0);
+    expect(existsSync(path.join(l!.dataDir, "people", "hana-mori.json"))).toBe(false);
+  });
+  await test.step("Right-click a named channel and delete it; a kind's defaults can't be deleted", async () => {
+    await l!.main.getByTestId("tab-channels").click();
+    await l!.main.getByTestId("channel-email").click({ button: "right" });
+    await expect(l!.main.getByTestId("context-menu").getByRole("menuitem")).toBeDisabled();
+    await l!.main.keyboard.press("Escape");
+    await l!.main.getByTestId("channel-x-acme-dev").click({ button: "right" });
+    await l!.main.getByTestId("context-menu").getByRole("menuitem", { name: "Delete #x-acme-dev…" }).click();
+    await expect(l!.main.getByTestId("confirm")).toContainText("Delete #x-acme-dev?");
+    await l!.main.getByTestId("confirm-ok").click();
+    await expect(l!.main.getByTestId("channel-x-acme-dev")).toHaveCount(0);
+    expect(existsSync(path.join(l!.dataDir, "channels", "x-acme-dev.json"))).toBe(false);
+  });
 });

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Rule, RuleScope } from "../shared/api";
 import { RULE_CATEGORIES, type RuleCategory } from "../core/schema";
 import { useToast } from "./toast";
+import { useOverlay } from "./overlay";
 
 const saru = window.saru;
 
@@ -55,7 +56,11 @@ export function RulesEditor({ scope, rules, title = "Rules", hint }: { scope: Ru
     }
   };
 
+  const { confirm } = useOverlay();
   const remove = async (id: string) => {
+    const rule = rules.find((r) => r.id === id);
+    const ok = await confirm({ title: "Delete this rule?", body: rule ? `“${rule.text}”` : undefined, action: "Delete" });
+    if (!ok) return;
     const r = await saru.deleteRule(scope, id);
     if (!r.ok) return toast.show(r.error, { bad: true });
     toast.show("Rule deleted.", { undo: async () => void (await saru.restoreRule(scope, r.value.rule, r.value.index)) });
@@ -130,6 +135,7 @@ function RuleRow(props: {
   onEdit(): void; onCancel(): void; onSave(r: Rule): void; onDelete(): void;
 }) {
   const { rule } = props;
+  const { openMenu } = useOverlay();
   const [text, setText] = useState(rule.text);
   const [category, setCategory] = useState<RuleCategory>(rule.category);
   useEffect(() => {
@@ -139,7 +145,12 @@ function RuleRow(props: {
   const commit = () => props.onSave({ ...rule, text: text.trim(), category });
 
   return (
-    <li className={`rule${props.fresh ? " fresh" : ""}`} data-testid="rule" data-rule-id={rule.id}>
+    <li
+      className={`rule${props.fresh ? " fresh" : ""}`}
+      data-testid="rule"
+      data-rule-id={rule.id}
+      onContextMenu={(e) => openMenu(e, [{ label: "Edit rule", onSelect: props.onEdit }, { label: "Delete rule…", danger: true, onSelect: props.onDelete }])}
+    >
       {props.editing ? (
         <div className="editing">
           <textarea

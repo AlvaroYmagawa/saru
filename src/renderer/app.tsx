@@ -6,6 +6,7 @@ import { Mark } from "./mark";
 import { Panel } from "./panel";
 import { RulesEditor } from "./rules";
 import { ToastHost, useToast } from "./toast";
+import { OverlayHost, useOverlay } from "./overlay";
 import { SettingsPage } from "./settings";
 
 declare global {
@@ -78,6 +79,48 @@ function Block({ title, hint, action, children }: { title: string; hint?: string
   );
 }
 
+// ── Deleting, always after a confirmation ────────────────────────────────────────────────────
+
+function useDeletePerson() {
+  const toast = useToast();
+  const { confirm } = useOverlay();
+  return async (p: Person): Promise<boolean> => {
+    const ok = await confirm({
+      title: `Delete ${p.fullName}?`,
+      body: `${p.fullName} and ${p.rules.length === 1 ? "their rule" : `their ${p.rules.length} rules`} are removed from People. You can undo it right after.`,
+      action: "Delete",
+    });
+    if (!ok) return false;
+    const r = await saru.deletePerson(p.slug);
+    if (!r.ok) {
+      toast.show(r.error, { bad: true });
+      return false;
+    }
+    toast.show(`Deleted ${p.fullName}.`, { undo: async () => void (await saru.restorePerson(r.value, r.value)) });
+    return true;
+  };
+}
+
+function useDeleteChannel() {
+  const toast = useToast();
+  const { confirm } = useOverlay();
+  return async (c: Channel): Promise<boolean> => {
+    const ok = await confirm({
+      title: `Delete ${c.name}?`,
+      body: `${c.name} and ${c.rules.length === 1 ? "its rule" : `its ${c.rules.length} rules`} are removed. Messages there will use the rules for every ${KIND_LABELS[c.kind]}. You can undo it right after.`,
+      action: "Delete",
+    });
+    if (!ok) return false;
+    const r = await saru.deleteChannel(c.id);
+    if (!r.ok) {
+      toast.show(r.error, { bad: true });
+      return false;
+    }
+    toast.show(`Deleted ${c.name}.`, { undo: async () => void (await saru.saveChannel(r.value)) });
+    return true;
+  };
+}
+
 // ── People ───────────────────────────────────────────────────────────────────────────────────
 
 function initials(name: string): string {
@@ -90,6 +133,8 @@ function PeoplePage({ data }: { data: DataSnapshot }) {
   const [tell, setTell] = useState("");
   const [busy, setBusy] = useState(false);
   const person = data.people.find((p) => p.slug === selected) ?? data.people[0];
+  const { openMenu } = useOverlay();
+  const deletePerson = useDeletePerson();
   const groups = useMemo(() => {
     const m = new Map<string, Person[]>();
     for (const p of data.people) {
@@ -125,7 +170,13 @@ function PeoplePage({ data }: { data: DataSnapshot }) {
           <div key={org}>
             <div className="group">{org}</div>
             {people.map((p) => (
-              <button key={p.slug} className={`item${person?.slug === p.slug ? " on" : ""}`} data-testid={`person-${p.slug}`} onClick={() => setSelected(p.slug)}>
+              <button
+                key={p.slug}
+                className={`item${person?.slug === p.slug ? " on" : ""}`}
+                data-testid={`person-${p.slug}`}
+                onClick={() => setSelected(p.slug)}
+                onContextMenu={(e) => openMenu(e, [{ label: `Delete ${p.fullName}…`, danger: true, onSelect: () => void deletePerson(p) }])}
+              >
                 <span className="avatar">{initials(p.fullName)}</span>
                 <span>
                   <div className="name">{p.fullName}</div>
@@ -194,6 +245,7 @@ function AboutField({ value, placeholder, onSave }: { value: string; placeholder
 
 function PersonDetail({ person }: { person: Person }) {
   const toast = useToast();
+  const deletePerson = useDeletePerson();
   const save = async (patch: Partial<Person>) => {
     const r = await saru.savePerson({ ...person, ...patch });
     if (!r.ok) toast.show(r.error, { bad: true });
@@ -224,16 +276,8 @@ function PersonDetail({ person }: { person: Person }) {
         <AboutField value={person.about} onSave={(about) => void save({ about })} />
       </Block>
       <div>
-        <button
-          className="btn quiet danger"
-          data-testid="person-delete"
-          onClick={async () => {
-            const r = await saru.deletePerson(person.slug);
-            if (!r.ok) return toast.show(r.error, { bad: true });
-            toast.show(`Removed ${person.fullName}.`, { undo: async () => void (await saru.restorePerson(r.value, r.value)) });
-          }}
-        >
-          Remove {first}
+        <button className="btn quiet danger" data-testid="person-delete" onClick={() => void deletePerson(person)}>
+          Delete {first}…
         </button>
       </div>
     </>
@@ -254,6 +298,7 @@ function ChannelsPage({ data }: { data: DataSnapshot }) {
   const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
   const channel = data.channels.find((c) => c.id === selected) ?? data.channels[0];
+  const deleteChannel = useDeleteChannel();
 
   const add = async () => {
     const text = request.trim();
@@ -290,7 +335,7 @@ function ChannelsPage({ data }: { data: DataSnapshot }) {
             <div key={kind}>
               <div className="group">{KIND_LABELS[kind]}</div>
               {base ? <ChannelItem c={base} on={channel?.id === base.id} onClick={() => setSelected(base.id)} /> : null}
-              {named.map((c) => <ChannelItem key={c.id} c={c} on={channel?.id === c.id} onClick={() => setSelected(c.id)} />)}
+              {named.map((c) => <ChannelItem key={c.id} c={c} on={channel?.id === c.id} onClick={() => setSelected(c.id)} onDelete={async () => (await deleteChannel(c)) && setSelected(c.kind)} />)}
             </div>
           );
         })}
@@ -302,9 +347,19 @@ function ChannelsPage({ data }: { data: DataSnapshot }) {
   );
 }
 
-function ChannelItem({ c, on, onClick }: { c: Channel; on: boolean; onClick(): void }) {
+function ChannelItem({ c, on, onClick, onDelete }: { c: Channel; on: boolean; onClick(): void; onDelete?: () => void }) {
+  const { openMenu } = useOverlay();
   return (
-    <button className={`item${on ? " on" : ""}`} data-testid={`channel-${c.id}`} onClick={onClick}>
+    <button
+      className={`item${on ? " on" : ""}`}
+      data-testid={`channel-${c.id}`}
+      onClick={onClick}
+      onContextMenu={(e) =>
+        openMenu(e, onDelete
+          ? [{ label: `Delete ${c.name}…`, danger: true, onSelect: onDelete }]
+          : [{ label: "A kind's own rules can't be deleted", disabled: true }])
+      }
+    >
       <span>
         <div className="name">{kindTitle(c)}</div>
         <div className="sub">{n(c.rules.length, "rule")}{c.intimacy ? ` · intimacy ${c.intimacy}` : ""}</div>
@@ -315,6 +370,7 @@ function ChannelItem({ c, on, onClick }: { c: Channel; on: boolean; onClick(): v
 
 function ChannelDetail({ channel, onDeleted }: { channel: Channel; onDeleted(): void }) {
   const toast = useToast();
+  const deleteChannel = useDeleteChannel();
   const isKind = !channel.match;
   const save = async (patch: Partial<Channel>) => {
     const r = await saru.saveChannel({ ...channel, ...patch });
@@ -340,17 +396,8 @@ function ChannelDetail({ channel, onDeleted }: { channel: Channel; onDeleted(): 
       </Block>
       {!isKind ? (
         <div>
-          <button
-            className="btn quiet danger"
-            data-testid="channel-delete"
-            onClick={async () => {
-              const r = await saru.deleteChannel(channel.id);
-              if (!r.ok) return toast.show(r.error, { bad: true });
-              onDeleted();
-              toast.show(`Removed ${channel.name}.`, { undo: async () => void (await saru.saveChannel(r.value)) });
-            }}
-          >
-            Remove {channel.name}
+          <button className="btn quiet danger" data-testid="channel-delete" onClick={async () => (await deleteChannel(channel)) && onDeleted()}>
+            Delete {channel.name}…
           </button>
         </div>
       ) : null}
@@ -441,7 +488,11 @@ function YouPage({ profile }: { profile: Profile }) {
 
 function Root() {
   document.body.classList.toggle("panel", saru.view === "panel");
-  return <ToastHost>{saru.view === "panel" ? <Panel /> : <App />}</ToastHost>;
+  return (
+    <ToastHost>
+      <OverlayHost>{saru.view === "panel" ? <Panel /> : <App />}</OverlayHost>
+    </ToastHost>
+  );
 }
 
 createRoot(document.getElementById("root")!).render(<Root />);
