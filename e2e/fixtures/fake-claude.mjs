@@ -29,6 +29,11 @@ if (system.includes("Saru app mode")) {
     const dmName = prompt.match(/^Window: .*? — (.+?) \(DM\)/m)?.[1];
     const known = dmName && prompt.includes(`### ${dmName}`);
     const notes = prompt.includes("### Bo Chen") ? " (Bo's notes applied.)" : "";
+    const mentioned = [...draft.matchAll(/@Notion person \d+|@[A-Z]\w*(?: [A-Z]\w*)?/g)].map((m) => m[0]);
+    if (mentioned.length) {
+      out({ message: `Hi ${mentioned.join(" and ")},\n\nJust a heads-up: both builds are in review and Android is approved.\n\nThanks`, recipient: null, note: null, newPerson: null });
+      process.exit(0);
+    }
     out({ message: `Hi ${dmName && !known ? dmName.split(" ")[0] : "Hana"},\n\nQuick one: could we move the release to Monday? Happy to talk it through.${notes}\n\nThanks`, recipient: channel ?? named, note: named ? null : "No one matched; wrote it at intimacy 2.", newPerson: dmName && !known ? dmName : null });
   }
 } else if (system.includes("writing rules for Saru")) {

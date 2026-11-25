@@ -106,3 +106,28 @@ for (const [name, opts, expected] of [
     expect(pasted(l)).toEqual([]);
   });
 }
+
+test("A Notion comment keeps its mentions: named from People, and pasted back as real mentions", async () => {
+  criterion("R36 — Notion @mentions are recovered from Notion's own clipboard data and pasted back as mentions");
+  l = await launch({
+    appName: "Notion",
+    title: "App release | Notion",
+    draft: "HI @Anonymous and @Anonymous ",
+    custom: require("node:path").join(__dirname, "..", "test", "fixtures", "notion-copy.bin"),
+  });
+  await trigger(l);
+  await expect(l.panel.getByTestId("panel")).toHaveAttribute("data-phase", "ready");
+  await test.step("Saru sees who was mentioned, not @Anonymous", async () => {
+    await expect(l!.panel.getByTestId("panel-original")).toHaveText("HI @Hana Mori and @Notion person 1");
+    await expect(l!.panel.getByTestId("panel-draft")).toContainText("Hi @Hana Mori and @Notion person 1,");
+  });
+  await test.step("Pasting writes Notion's data back with both mentions", async () => {
+    await l!.panel.getByTestId("panel-paste").click();
+    await expect.poll(() => pasted(l!).length).toBe(1);
+    const editing = JSON.parse(pasted(l!)[0]!.custom!["text/_notion-text-production"]!).editing;
+    expect(editing.filter((s: unknown[]) => s[0] === "‣").map((s: [string, [string, string][]]) => s[1][0]![1])).toEqual([
+      "00000000-0000-4000-8000-000000000003",
+      "00000000-0000-4000-8000-000000000004",
+    ]);
+  });
+});

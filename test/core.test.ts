@@ -192,3 +192,31 @@ describe("R32 — the send guard lets only Saru's messages out", () => {
     expect((await decide("mcp__plugin_slack_slack__slack_send_message", send, t0 + 25 * 3600_000, file)).allow).toBe(false);
   });
 });
+
+describe("R36 — Notion mentions are read from Notion's own clipboard data and written back", () => {
+  const fixture = () => readFileSync(path.join(__dirname, "fixtures", "notion-copy.bin"));
+  it("reads and rebuilds Chromium's custom data byte for byte", async () => {
+    const { buildCustomData, parseCustomData } = await import("../src/core/notion");
+    const map = parseCustomData(fixture());
+    expect([...map.keys()]).toEqual(["text/_notion-page-source-production", "text/_notion-text-production"]);
+    expect(Buffer.compare(buildCustomData(map), fixture())).toBe(0);
+  });
+
+  it("names each mention from People, and turns names back into mentions on paste", async () => {
+    const { parseCustomData, readNotionCopy, writeNotionCopy } = await import("../src/core/notion");
+    const hana = Person.parse({ slug: "hana-mori", fullName: "Hana Mori", intimacy: 2, notionUserId: "00000000-0000-4000-8000-000000000003" });
+    const copy = readNotionCopy(parseCustomData(fixture()), [hana])!;
+    expect(copy.text).toBe("HI @Hana Mori and @Notion person 1 ");
+    const back = writeNotionCopy("Hi @Hana Mori and @Notion person 1,\n\nThanks", copy);
+    expect(JSON.parse(back.get("text/_notion-text-production")!).editing).toEqual([
+      ["Hi "], ["‣", [["u", "00000000-0000-4000-8000-000000000003"]]], [" and "], ["‣", [["u", "00000000-0000-4000-8000-000000000004"]]], [",\n\nThanks"],
+    ]);
+    expect(back.get("text/_notion-page-source-production")).toContain("00000000-0000-4000-8000-000000000001");
+  });
+
+  it("ignores data that isn't Notion's or has no mentions", async () => {
+    const { parseCustomData, readNotionCopy } = await import("../src/core/notion");
+    expect(parseCustomData(new Uint8Array([1, 2, 3])).size).toBe(0);
+    expect(readNotionCopy(new Map([["text/_notion-text-production", '{"editing":[["plain"]]}']]), [])).toBeUndefined();
+  });
+});

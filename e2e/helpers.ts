@@ -25,6 +25,8 @@ export interface LaunchOpts {
   settings?: Record<string, unknown>;
   remote?: string;
   recordVideoDir?: string;
+  /** A file of Chromium web custom data the pretend app copies with the draft (Notion). */
+  custom?: string;
 }
 
 /** A fictional person and channel: the e2e data never holds real people. */
@@ -33,7 +35,7 @@ function seed(dataDir: string): void {
   mkdirSync(path.join(dataDir, "channels"), { recursive: true });
   writeFileSync(path.join(dataDir, "people", "hana-mori.json"), JSON.stringify({
     slug: "hana-mori", fullName: "Hana Mori", aliases: ["Hana", "HM"], role: "Head of Product", org: "Acme (client)", intimacy: 2,
-    nativeLanguage: "en", timezone: "Europe/London", about: "Product lead on the Acme side.",
+    nativeLanguage: "en", timezone: "Europe/London", notionUserId: "00000000-0000-4000-8000-000000000003", about: "Product lead on the Acme side.",
     rules: [{ id: "hana000001", category: "format", text: "Numbered lists for decisions." }],
   }, null, 2));
   writeFileSync(path.join(dataDir, "channels", "x-acme-dev.json"), JSON.stringify({
@@ -62,6 +64,7 @@ export async function launch(o: LaunchOpts = {}): Promise<Launched> {
       FAKE_CLAUDE_LOG: claudeLog,
       SARU_E2E_PASTE_FILE: path.join(tmp, "pasted.json"),
       ...(o.remote ? { SARU_E2E_REMOTE: o.remote } : {}),
+      ...(o.custom ? { SARU_E2E_CUSTOM: o.custom } : {}),
     },
     // SARU_RECORD=1 records every window (for the review page), one video each.
     ...(o.recordVideoDir || process.env.SARU_RECORD === "1"
@@ -83,7 +86,7 @@ export async function launch(o: LaunchOpts = {}): Promise<Launched> {
   return { app, main: main!, panel: panel!, dataDir, claudeLog, configFile };
 }
 
-export function pasted(l: Launched): { app: string; text: string }[] {
+export function pasted(l: Launched): { app: string; text: string; custom?: Record<string, string> }[] {
   const f = path.join(path.dirname(l.dataDir), "pasted.json");
   return existsSync(f) ? JSON.parse(readFileSync(f, "utf8")) : [];
 }
