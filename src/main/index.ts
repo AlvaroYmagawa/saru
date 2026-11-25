@@ -27,6 +27,8 @@ let panelState: PanelState | undefined;
 let activeShortcut: string | undefined;
 let watcher: FSWatcher | undefined;
 
+// e2e runs get their own profile, so they start even while the installed Saru is open.
+if (E2E) app.setPath("userData", path.join(app.getPath("temp"), `saru-e2e-${process.pid}`));
 if (!app.requestSingleInstanceLock()) app.quit();
 
 function resource(...p: string[]): string {
