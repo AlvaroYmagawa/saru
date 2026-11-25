@@ -26,7 +26,7 @@ if (system.includes("Saru app mode")) {
     const dm = prompt.match(/## Recipients from the window title\n(.+)/)?.[1] ?? "";
     const named = dm.startsWith("(none") ? null : dm;
     const channel = prompt.match(/## Channel: .*— (#[\w-]+)/)?.[1];
-    out({ message: `Hi Hana,\n\nQuick one: could we move the release to Monday?Happy to talk it through.\n\nThanks`, recipient: channel ?? named, note: named ? null : "No one matched; wrote it at intimacy 2." });
+    out({ message: `Hi Hana,\n\nQuick one: could we move the release to Monday? Happy to talk it through.\n\nThanks`, recipient: channel ?? named, note: named ? null : "No one matched; wrote it at intimacy 2." });
   }
 } else if (system.includes("writing rules for Saru")) {
   const req = between("<<<REQUEST", "REQUEST>>>");

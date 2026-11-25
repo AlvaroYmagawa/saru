@@ -62,7 +62,7 @@ body {
   background: var(--washi);
   -webkit-font-smoothing: antialiased;
 }
-body.panel { background: transparent; }
+body.panel { background: transparent; overflow: hidden; }
 button, input, textarea, select { font: inherit; color: inherit; }
 ::selection { background: var(--shu-soft); }
 

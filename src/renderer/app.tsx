@@ -13,6 +13,7 @@ declare global {
   }
 }
 const saru = window.saru;
+const n = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
 
 type Tab = "people" | "channels" | "you" | "settings";
 const TABS: { id: Tab; num: string; label: string }[] = [
@@ -112,7 +113,7 @@ function PeoplePage({ data }: { data: DataSnapshot }) {
     <div className="page">
       <aside className="list">
         <div className="row" style={{ padding: "0 10px" }}>
-          <span className="kicker">{data.people.length} people</span>
+          <span className="kicker">{data.people.length === 1 ? "1 person" : `${data.people.length} people`}</span>
         </div>
         {data.invalid.length ? <div className="banner" style={{ margin: 10 }}>Skipped {data.invalid.length} file(s) that don't parse: {data.invalid.map((i) => i.file).join(", ")}</div> : null}
         {groups.map(([org, people]) => (
@@ -123,7 +124,7 @@ function PeoplePage({ data }: { data: DataSnapshot }) {
                 <span className="avatar">{initials(p.fullName)}</span>
                 <span>
                   <div>{p.fullName}</div>
-                  <div className="sub">{p.role || "—"} · {p.rules.length} rules</div>
+                  <div className="sub">{p.role || "—"} · {n(p.rules.length, "rule")}</div>
                 </span>
               </button>
             ))}
@@ -285,7 +286,7 @@ function ChannelItem({ c, on, label, onClick }: { c: Channel; on: boolean; label
     <button className={`item${on ? " on" : ""}`} data-testid={`channel-${c.id}`} onClick={onClick}>
       <span>
         <div>{label}</div>
-        <div className="sub">{c.rules.length} rules{c.intimacy ? ` · intimacy ${c.intimacy}` : ""}</div>
+        <div className="sub">{n(c.rules.length, "rule")}{c.intimacy ? ` · intimacy ${c.intimacy}` : ""}</div>
       </span>
     </button>
   );
