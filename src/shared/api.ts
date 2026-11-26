@@ -7,6 +7,11 @@ export type { Channel, Person, Profile, Rule, RuleCategory, Settings, SyncStatus
 
 export interface PanelState {
   phase: "loading" | "ready" | "changing" | "error";
+  /** Polishing a draft (default), or translating the selected text. */
+  mode?: "polish" | "translate";
+  /** Translate mode: the language it's translated into, and the one Claude saw it was in. */
+  to?: string;
+  from?: string | null;
   /**
    * The three monkeys, in order: see (Saru read the window), hear (it gathered the person's and
    * the channel's rules), speak (the message is written). The last one reached; error stops there.
@@ -40,6 +45,8 @@ export interface DataSnapshot {
 }
 
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
+
+export type ShortcutAction = "polish" | "translate";
 
 export interface ShortcutResult {
   shortcut: string;
@@ -81,8 +88,8 @@ export interface SaruApi {
   // Settings
   getSettings(): Promise<Settings>;
   saveSettings(s: Settings): Promise<Result<Settings>>;
-  setShortcut(accelerator: string): Promise<ShortcutResult>;
-  /** Pauses the global shortcut while the recorder listens, so pressing it records it. */
+  setShortcut(accelerator: string, action?: ShortcutAction): Promise<ShortcutResult>;
+  /** Pauses the global shortcuts while the recorder listens, so pressing one records it. */
   suspendShortcut(on: boolean): Promise<void>;
   getSync(): Promise<SyncStatus>;
   onSync(fn: (s: SyncStatus) => void): () => void;
@@ -91,4 +98,6 @@ export interface SaruApi {
   openAccessibility(): Promise<void>;
   /** e2e only: starts a polish as the shortcut would. */
   testTrigger?(): Promise<void>;
+  /** e2e only: starts a translation as its shortcut would. */
+  testTranslate?(): Promise<void>;
 }

@@ -49,6 +49,10 @@ if (system.includes("Saru app mode")) {
   out({ name: "Kai", nativeLanguage: "pt-BR", outputLanguage: "en-GB", about: "Short, direct messages; warm with teammates.", rules: [{ text: "Sign off with just K.", category: "format" }, { text: "Never use exclamation marks.", category: "avoid" }], note: null, read: 38 });
 } else if (system.includes("user's own profile")) {
   out({ name: null, nativeLanguage: null, outputLanguage: null, about: null, rules: [{ text: "Never use exclamation marks.", category: "avoid" }], note: null });
+} else if (system.includes("Saru's translator")) {
+  const to = prompt.match(/^Translate into: (.+)$/m)?.[1] ?? "?";
+  const text = between("<<<TEXT", "TEXT>>>");
+  out({ translation: `[${to}] ${text}`, from: "English" });
 } else if (system.includes("named place")) {
   out({ action: "create", kind: "slack-channel", match: "#x-acme-ops", intimacy: 2, about: "Client ops channel.", note: null });
 } else {

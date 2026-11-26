@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Settings, SyncStatus } from "../shared/api";
+import type { Settings, ShortcutAction, SyncStatus } from "../shared/api";
 import { useToast } from "./toast";
 
 const saru = window.saru;
@@ -23,7 +23,7 @@ export function prettyShortcut(acc: string): string {
   return acc.split("+").map((p) => map[p] ?? p).join("");
 }
 
-function ShortcutRecorder({ value, onChange }: { value: string; onChange(v: string): void }) {
+function ShortcutRecorder({ value, onChange, action = "polish", testId = "shortcut" }: { value: string; onChange(v: string): void; action?: ShortcutAction; testId?: string }) {
   const toast = useToast();
   const [listening, setListening] = useState(false);
   useEffect(() => {
@@ -35,7 +35,7 @@ function ShortcutRecorder({ value, onChange }: { value: string; onChange(v: stri
       const acc = acceleratorFrom(e);
       if (!acc) return;
       setListening(false);
-      const r = await saru.setShortcut(acc);
+      const r = await saru.setShortcut(acc, action);
       if (r.refused) toast.show(r.refused, { bad: true });
       else {
         onChange(r.shortcut);
@@ -50,13 +50,16 @@ function ShortcutRecorder({ value, onChange }: { value: string; onChange(v: stri
   }, [listening]);
   return (
     <div className="actions">
-      <button className={`btn recorder${listening ? " listening" : ""}`} data-testid="shortcut" onClick={() => setListening((l) => !l)}>
+      <button className={`btn recorder${listening ? " listening" : ""}`} data-testid={testId} onClick={() => setListening((l) => !l)}>
         {listening ? "Press the new shortcut…" : prettyShortcut(value)}
       </button>
       <span className="label">{listening ? "Esc cancels" : "Click, then press the keys you want"}</span>
     </div>
   );
 }
+
+/** Suggestions for "Translate into"; any language name or tag works. */
+const LANGUAGES = ["pt-BR", "pt-PT", "en-GB", "en-US", "es", "fr", "de", "it", "ja", "zh-CN", "ko"];
 
 export function SettingsPage({ sync }: { sync?: SyncStatus }) {
   const toast = useToast();
@@ -98,6 +101,34 @@ export function SettingsPage({ sync }: { sync?: SyncStatus }) {
           <div className="block-head"><h3>Shortcut</h3><span className="hint">Starts a polish in any app</span></div>
           <ShortcutRecorder value={s.shortcut} onChange={(shortcut) => setS({ ...s, shortcut })} />
           <p className="label">In the panel, <kbd>⌘↵</kbd> or the Paste button pastes Saru's version. Enter alone never pastes, so it can't send your draft by accident.</p>
+        </section>
+
+        <section className="block" data-testid="translate">
+          <div className="block-head"><h3>Translate</h3><span className="hint">Select text in any app, press the shortcut</span></div>
+          <ShortcutRecorder value={s.translateShortcut} action="translate" testId="translate-shortcut" onChange={(translateShortcut) => setS({ ...s, translateShortcut })} />
+          <div className="grid">
+            <label>
+              <span className="label">Translate into</span>
+              <input
+                className="field"
+                data-testid="translate-to"
+                list="translate-languages"
+                defaultValue={s.translateTo}
+                key={s.translateTo}
+                placeholder="pt-BR"
+                onBlur={(e) => {
+                  const v = e.target.value.trim();
+                  if (!v) e.target.value = s.translateTo;
+                  else if (v !== s.translateTo) void save({ translateTo: v });
+                }}
+                onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+              />
+              <datalist id="translate-languages">
+                {LANGUAGES.map((l) => <option key={l} value={l} />)}
+              </datalist>
+            </label>
+          </div>
+          <p className="label">Saru shows the translation in its panel; <kbd>⌘↵</kbd> copies it. The text you selected is left as it is.</p>
         </section>
 
         <section className="block">

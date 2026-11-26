@@ -44,6 +44,8 @@
   and rewrites the draft with what you said.
 - **You approve every word.** Nothing is sent. Saru pastes into your draft only when you press
   <kbd>⌘</kbd><kbd>↵</kbd>; a plain Enter never pastes.
+- **Translates what you select.** Select text in any app and press <kbd>⌥</kbd><kbd>⌘</kbd><kbd>T</kbd>:
+  Saru shows it in Brazilian Portuguese (or the language you set) and <kbd>⌘</kbd><kbd>↵</kbd> copies it.
 - **Your notes stay yours.** Plain JSON on your Mac, optionally synced to a **private** GitHub repo.
 
 <p align="center">
@@ -180,7 +182,9 @@ first and show you. To send your own words unchanged, ask for it: Claude marks t
 
 | Field | Default | What |
 | --- | --- | --- |
-| `shortcut` | `Alt+Command+P` | the shortcut, as an Electron accelerator |
+| `shortcut` | `Alt+Command+P` | the polish shortcut, as an Electron accelerator |
+| `translateShortcut` | `Alt+Command+T` | the shortcut that translates the selected text |
+| `translateTo` | `pt-BR` | the language it translates into (a name or a tag) |
 | `theme` | `system` | `system`, `light` or `dark` |
 | `model` | `sonnet` | `claude --model` |
 | `claudePath` | from your shell | absolute path to `claude` |
@@ -194,7 +198,7 @@ first and show you. To send your own words unchanged, ask for it: Claude marks t
 
 - Your draft, and the notes needed to rewrite it, go to Anthropic through **your own Claude Code**,
   on your own account. Nothing goes anywhere else: Saru has no server and no telemetry.
-- When writing, Claude runs with **no tools** and none of your Claude Code settings, plugins or MCP
+- When writing or translating, Claude runs with **no tools** and none of your Claude Code settings, plugins or MCP
   servers. Your draft is treated as text to rewrite, never as instructions.
 - When learning your style, Claude may only **search and read** Slack; sending, drafting, reacting
   and editing are denied, and anything not explicitly allowed is refused.

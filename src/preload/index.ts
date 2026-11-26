@@ -46,6 +46,9 @@ const api: SaruApi = {
   accessibility: invoke("os:accessibility") as SaruApi["accessibility"],
   openAccessibility: invoke("os:open-accessibility") as SaruApi["openAccessibility"],
 };
-if (process.argv.includes("--saru-e2e")) api.testTrigger = invoke("test:trigger") as NonNullable<SaruApi["testTrigger"]>;
+if (process.argv.includes("--saru-e2e")) {
+  api.testTrigger = invoke("test:trigger") as NonNullable<SaruApi["testTrigger"]>;
+  api.testTranslate = invoke("test:translate") as NonNullable<SaruApi["testTranslate"]>;
+}
 
 contextBridge.exposeInMainWorld("saru", api);
