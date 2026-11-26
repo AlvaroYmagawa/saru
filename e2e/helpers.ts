@@ -25,6 +25,8 @@ export interface LaunchOpts {
   settings?: Record<string, unknown>;
   remote?: string;
   recordVideoDir?: string;
+  /** The text selected in the pretend app, for the translate shortcut. */
+  selection?: string;
   /** A file of Chromium web custom data the pretend app copies with the draft (Notion). */
   custom?: string;
 }
@@ -65,6 +67,7 @@ export async function launch(o: LaunchOpts = {}): Promise<Launched> {
       SARU_E2E_PASTE_FILE: path.join(tmp, "pasted.json"),
       ...(o.remote ? { SARU_E2E_REMOTE: o.remote } : {}),
       ...(o.custom ? { SARU_E2E_CUSTOM: o.custom } : {}),
+      ...(o.selection !== undefined ? { SARU_E2E_SELECTION: o.selection } : {}),
     },
     // SARU_RECORD=1 records every window (for the review page), one video each.
     ...(o.recordVideoDir || process.env.SARU_RECORD === "1"
@@ -103,6 +106,11 @@ export function readJson(l: Launched, rel: string): any {
 export async function trigger(l: Launched): Promise<void> {
   l.panelUsed = true;
   await l.main.evaluate(() => (window as any).saru.testTrigger());
+}
+
+export async function triggerTranslate(l: Launched): Promise<void> {
+  l.panelUsed = true;
+  await l.main.evaluate(() => (window as any).saru.testTranslate());
 }
 
 /** Closes the app and, when recording, attaches the app window's video then the panel's. */

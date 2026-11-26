@@ -5,12 +5,17 @@ import { z } from "zod";
 import { formatZodError } from "./schema";
 
 export const DEFAULT_SHORTCUT = "Alt+Command+P";
+export const DEFAULT_TRANSLATE_SHORTCUT = "Alt+Command+T";
 
 export const Settings = z.object({
   /** Light, dark, or follow macOS. */
   theme: z.enum(["system", "light", "dark"]).default("system"),
   /** Electron accelerator that starts a polish. */
   shortcut: z.string().min(1).default(DEFAULT_SHORTCUT),
+  /** Electron accelerator that translates the selected text. */
+  translateShortcut: z.string().min(1).default(DEFAULT_TRANSLATE_SHORTCUT),
+  /** The language the selected text is translated into (a name or a tag such as pt-BR). */
+  translateTo: z.string().trim().min(1, "say which language").max(40).default("pt-BR"),
   /** `claude --model`. */
   model: z.string().min(1).default("sonnet"),
   /** Absolute path to `claude`; empty = found through the login shell. */

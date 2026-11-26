@@ -7,6 +7,7 @@ const saru = window.saru;
 const STEPS = { see: "Gathering the rules…", hear: "Writing it…", speak: "Ready to paste" } as const;
 
 function stepText(s: PanelState): string {
+  if (s.mode === "translate") return s.phase === "ready" ? (s.from ? `From ${s.from}` : "Translated") : s.phase === "error" ? "Stopped" : "Translating…";
   if (s.phase === "ready") return "Ready to paste";
   if (s.phase === "error") return "Stopped";
   if (s.phase === "changing") return "Rewriting…";
@@ -69,6 +70,7 @@ export function Panel() {
   const card = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const ready = s.phase === "ready" && !!s.message;
+  const translating = s.mode === "translate";
 
   useEffect(() => saru.onPanel((next) => {
     setS(next);
@@ -86,8 +88,8 @@ export function Panel() {
   }, []);
 
   useEffect(() => {
-    if (s.phase === "ready") input.current?.focus();
-  }, [s.phase]);
+    if (s.phase === "ready" && !translating) input.current?.focus();
+  }, [s.phase, translating]);
 
   // ⌘↵ pastes; Esc closes. A plain Enter never pastes: it can't send anything by accident.
   useEffect(() => {
@@ -127,13 +129,13 @@ export function Panel() {
       <div className="panel-body">
         {s.original ? (
           <div className="yours">
-            <div className="label">Your draft</div>
+            <div className="label">{translating ? "Selected text" : "Your draft"}</div>
             <div className="text" data-testid="panel-original">{s.original}</div>
           </div>
         ) : null}
         {s.message ? (
           <div className="saru-version">
-            <div className="label">Saru's version</div>
+            <div className="label">{translating ? `In ${s.to}` : "Saru's version"}</div>
             <div className="text" data-testid="panel-draft" style={{ opacity: s.phase === "changing" ? 0.4 : 1 }}>{s.message}</div>
           </div>
         ) : null}
@@ -149,7 +151,7 @@ export function Panel() {
         ) : null}
       </div>
       <div className="panel-foot">
-        <input
+        {translating ? null : <input
           ref={input}
           className="field"
           data-testid="panel-change"
@@ -166,17 +168,17 @@ export function Panel() {
               rewrite();
             }
           }}
-        />
+        />}
         <div className="actions">
           <button className="btn quiet" data-testid="panel-discard" onClick={() => void saru.closePanel()}>
-            Discard <kbd>esc</kbd>
+            {translating ? "Close" : "Discard"} <kbd>esc</kbd>
           </button>
           <span className="hint" data-testid="panel-hint">
             {nudge ? "Enter rewrites with your change. To paste, press ⌘↵." : change.trim() ? "Enter rewrites it" : ""}
           </span>
           <span className="spacer" />
           <button className="btn primary" data-testid="panel-paste" disabled={!ready} onClick={() => void saru.accept()}>
-            Paste into {target} <kbd>⌘↵</kbd>
+            {translating ? "Copy" : `Paste into ${target}`} <kbd>⌘↵</kbd>
           </button>
         </div>
       </div>

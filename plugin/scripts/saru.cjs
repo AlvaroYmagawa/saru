@@ -20307,11 +20307,16 @@ var import_node_fs2 = require("node:fs");
 var import_node_os2 = __toESM(require("node:os"));
 var import_node_path = __toESM(require("node:path"));
 var DEFAULT_SHORTCUT = "Alt+Command+P";
+var DEFAULT_TRANSLATE_SHORTCUT = "Alt+Command+T";
 var Settings = external_exports.object({
   /** Light, dark, or follow macOS. */
   theme: external_exports.enum(["system", "light", "dark"]).default("system"),
   /** Electron accelerator that starts a polish. */
   shortcut: external_exports.string().min(1).default(DEFAULT_SHORTCUT),
+  /** Electron accelerator that translates the selected text. */
+  translateShortcut: external_exports.string().min(1).default(DEFAULT_TRANSLATE_SHORTCUT),
+  /** The language the selected text is translated into (a name or a tag such as pt-BR). */
+  translateTo: external_exports.string().trim().min(1, "say which language").max(40).default("pt-BR"),
   /** `claude --model`. */
   model: external_exports.string().min(1).default("sonnet"),
   /** Absolute path to `claude`; empty = found through the login shell. */

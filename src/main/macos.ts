@@ -20,6 +20,8 @@ export interface OsBridge {
   isTrusted(prompt: boolean): boolean;
   openAccessibilitySettings(): void;
   captureFocused(delayMs: number): Promise<Focused>;
+  /** The text selected in the front app (⌘C only: the selection and the box are left alone). */
+  captureSelection(delayMs: number): Promise<{ app: string; text: string }>;
   /** `custom`: web custom data to paste alongside the text (Notion mentions). */
   replaceFocused(app: string, text: string, delayMs: number, custom?: Map<string, string>): Promise<void>;
 }
@@ -118,6 +120,29 @@ export const macBridge: OsBridge = {
     return { app, title: rest.join("\n"), text, custom };
   },
 
+  async captureSelection(delayMs) {
+    const saved = await snapshot();
+    const sentinel = `saru-${Date.now()}-${Math.random()}`;
+    await clipboard.writeText(sentinel);
+    const appName = await osascript(`
+      tell application "System Events"
+        set appName to name of first application process whose frontmost is true
+        key code 8 using command down
+      end tell
+      return appName`);
+    let text = "";
+    for (let i = 0; i < 10; i++) {
+      await sleep(Math.max(20, Math.round(delayMs / 3)));
+      const now = await clipboard.readText();
+      if (now !== sentinel) {
+        text = now;
+        break;
+      }
+    }
+    await restore(saved);
+    return { app: appName, text };
+  },
+
   async replaceFocused(app, text, delayMs, custom) {
     const saved = await snapshot();
     if (custom?.size) {
@@ -154,6 +179,9 @@ export function fakeBridge(): OsBridge & { pasted: { app: string; text: string; 
         text: process.env.SARU_E2E_DRAFT ?? "",
         custom: process.env.SARU_E2E_CUSTOM ? parseCustomData(readFileSync(process.env.SARU_E2E_CUSTOM)) : undefined,
       };
+    },
+    async captureSelection() {
+      return { app: process.env.SARU_E2E_APP ?? "Slack", text: process.env.SARU_E2E_SELECTION ?? "" };
     },
     async replaceFocused(app, text, _delay, custom) {
       pasted.push({ app, text, ...(custom ? { custom: Object.fromEntries(custom) } : {}) });

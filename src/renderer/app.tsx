@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import type { Channel, DataSnapshot, Person, Profile, SaruApi, SyncStatus } from "../shared/api";
 import { CHANNEL_KINDS, KIND_LABELS } from "../core/schema";
+import { channelMatches, personMatches } from "../core/search";
 import { Mark } from "./mark";
 import { Panel } from "./panel";
 import { RulesEditor } from "./rules";
@@ -79,6 +80,42 @@ function Block({ title, hint, action, children }: { title: string; hint?: string
   );
 }
 
+/** Filters a list as you type. ⌘F focuses it; Esc clears it. */
+function SearchField({ value, onChange, placeholder, testId }: { value: string; onChange(v: string): void; placeholder: string; testId: string }) {
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey && !e.altKey && !e.ctrlKey && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        ref.current?.focus();
+        ref.current?.select();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  return (
+    <div className="search">
+      <input
+        ref={ref}
+        type="search"
+        className="field"
+        data-testid={testId}
+        aria-label={placeholder}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape" && value) {
+            e.stopPropagation();
+            onChange("");
+          }
+        }}
+      />
+    </div>
+  );
+}
+
 // ── Deleting, always after a confirmation ────────────────────────────────────────────────────
 
 function useDeletePerson() {
@@ -132,17 +169,19 @@ function PeoplePage({ data }: { data: DataSnapshot }) {
   const [selected, setSelected] = useState<string | undefined>(data.people[0]?.slug);
   const [tell, setTell] = useState("");
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
   const person = data.people.find((p) => p.slug === selected) ?? data.people[0];
   const { openMenu } = useOverlay();
   const deletePerson = useDeletePerson();
+  const shown = useMemo(() => data.people.filter((p) => personMatches(p, query)), [data.people, query]);
   const groups = useMemo(() => {
     const m = new Map<string, Person[]>();
-    for (const p of data.people) {
+    for (const p of shown) {
       const org = p.org || "No org";
       m.set(org, [...(m.get(org) ?? []), p]);
     }
     return [...m.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [data.people]);
+  }, [shown]);
 
   const submitTell = async () => {
     const text = tell.trim();
@@ -165,6 +204,7 @@ function PeoplePage({ data }: { data: DataSnapshot }) {
     <>
       <aside className="list">
         <div className="list-head"><h2>People</h2><span className="label">{data.people.length === 1 ? "1 person" : `${data.people.length} people`}</span></div>
+        {data.people.length ? <SearchField value={query} onChange={setQuery} placeholder="Search people" testId="people-search" /> : null}
         {data.invalid.length ? <div className="banner">Skipped {data.invalid.length} file(s) that don't parse: {data.invalid.map((i) => i.file).join(", ")}</div> : null}
         {groups.map(([org, people]) => (
           <div key={org}>
@@ -187,6 +227,7 @@ function PeoplePage({ data }: { data: DataSnapshot }) {
           </div>
         ))}
         {data.people.length === 0 ? <p className="empty" style={{ padding: 8 }}>Nobody yet. Tell Saru about someone on the right.</p> : null}
+        {data.people.length > 0 && shown.length === 0 ? <p className="empty" data-testid="people-no-match" style={{ padding: 8 }}>No one matches “{query.trim()}”.</p> : null}
       </aside>
       <main className="sheet">
         <div className="sheet-inner">
@@ -297,8 +338,10 @@ function ChannelsPage({ data }: { data: DataSnapshot }) {
   const [request, setRequest] = useState("");
   const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
   const channel = data.channels.find((c) => c.id === selected) ?? data.channels[0];
   const deleteChannel = useDeleteChannel();
+  const shown = useMemo(() => new Set(data.channels.filter((c) => channelMatches(c, query)).map((c) => c.id)), [data.channels, query]);
 
   const add = async () => {
     const text = request.trim();
@@ -328,9 +371,11 @@ function ChannelsPage({ data }: { data: DataSnapshot }) {
             <span className="hint">{busy ? "Adding it…" : "Describe it in a sentence, then Enter"}</span>
           </div>
         ) : null}
+        <SearchField value={query} onChange={setQuery} placeholder="Search channels" testId="channels-search" />
         {CHANNEL_KINDS.map((kind) => {
-          const named = data.channels.filter((c) => c.kind === kind && c.match);
-          const base = data.channels.find((c) => c.id === kind);
+          const named = data.channels.filter((c) => c.kind === kind && c.match && shown.has(c.id));
+          const base = data.channels.find((c) => c.id === kind && shown.has(c.id));
+          if (!base && !named.length) return null;
           return (
             <div key={kind}>
               <div className="group">{KIND_LABELS[kind]}</div>
@@ -339,6 +384,7 @@ function ChannelsPage({ data }: { data: DataSnapshot }) {
             </div>
           );
         })}
+        {shown.size === 0 ? <p className="empty" data-testid="channels-no-match" style={{ padding: 8 }}>No channel matches “{query.trim()}”.</p> : null}
       </aside>
       <main className="sheet">
         <div className="sheet-inner">{channel ? <ChannelDetail key={channel.id} channel={channel} onDeleted={() => setSelected(channel.kind)} /> : null}</div>
