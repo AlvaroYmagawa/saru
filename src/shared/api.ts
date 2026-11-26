@@ -100,4 +100,6 @@ export interface SaruApi {
   testTrigger?(): Promise<void>;
   /** e2e only: starts a translation as its shortcut would. */
   testTranslate?(): Promise<void>;
+  /** e2e only: what Saru copied (e2e runs never touch the real clipboard). */
+  testClipboard?(): Promise<string>;
 }

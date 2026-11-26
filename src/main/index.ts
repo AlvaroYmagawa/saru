@@ -15,6 +15,13 @@ import type { DataSnapshot, PanelState, Result, ShortcutAction, ShortcutResult }
 import { fakeBridge, macBridge, type OsBridge } from "./macos";
 
 const E2E = process.env.SARU_E2E === "1";
+/**
+ * e2e runs keep every window hidden, never take focus and never touch the real clipboard, so the
+ * suite can run while you keep using your Mac. SARU_E2E_SHOW=1 shows the windows, for debugging.
+ */
+const HIDDEN = E2E && process.env.SARU_E2E_SHOW !== "1";
+/** The clipboard e2e runs write to instead of the real one. */
+let testClipboard = "";
 /** The panel window: the card plus its 10px margin on each side. */
 const PANEL_WIDTH = 640;
 const os: OsBridge = E2E ? fakeBridge() : macBridge;
@@ -89,7 +96,7 @@ function ensurePanel(): BrowserWindow {
     transparent: true,
     backgroundColor: "#00000000",
     hasShadow: false,
-    webPreferences: { preload: path.join(__dirname, "preload.cjs"), additionalArguments: E2E ? ["--saru-e2e"] : [] },
+    webPreferences: { preload: path.join(__dirname, "preload.cjs"), additionalArguments: E2E ? ["--saru-e2e"] : [], backgroundThrottling: !HIDDEN },
   });
   panel.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   loadView(panel, "panel");
@@ -104,6 +111,7 @@ function showPanel(): void {
   const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
   const { x, y, width } = display.workArea;
   win.setPosition(Math.round(x + (width - PANEL_WIDTH) / 2), Math.round(y + 120));
+  if (HIDDEN) return;
   win.show();
   // Take focus from the app you're writing in, so no key you press next reaches it.
   if (!E2E) app.focus({ steal: true });
@@ -278,7 +286,8 @@ ipcMain.handle("panel:accept", async () => {
   const s = panelState;
   if (s?.mode === "translate") {
     if (!s.message) return;
-    clipboard.writeText(s.message);
+    if (E2E) testClipboard = s.message;
+    else clipboard.writeText(s.message);
     panel?.hide();
     if (!E2E) app.hide();
     return;
@@ -310,6 +319,7 @@ ipcMain.handle("panel:close", () => {
 
 ipcMain.handle("test:trigger", () => (E2E ? startPolish() : undefined));
 ipcMain.handle("test:translate", () => (E2E ? startTranslate() : undefined));
+ipcMain.handle("test:clipboard", () => (E2E ? testClipboard : undefined));
 ipcMain.handle("test:pasted", () => (E2E ? (os as ReturnType<typeof fakeBridge>).pasted : []));
 
 // ── Data ─────────────────────────────────────────────────────────────────────────────────────
@@ -478,8 +488,10 @@ async function startSync(): Promise<void> {
 
 function openMain(tab?: string): void {
   if (main && !main.isDestroyed()) {
-    main.show();
-    main.focus();
+    if (!HIDDEN) {
+      main.show();
+      main.focus();
+    }
     if (tab) main.webContents.send("app:tab", tab);
     return;
   }
@@ -493,10 +505,11 @@ function openMain(tab?: string): void {
     backgroundColor: "#00000000",
     vibrancy: "sidebar",
     show: false,
-    webPreferences: { preload: path.join(__dirname, "preload.cjs"), additionalArguments: E2E ? ["--saru-e2e"] : [] },
+    webPreferences: { preload: path.join(__dirname, "preload.cjs"), additionalArguments: E2E ? ["--saru-e2e"] : [], backgroundThrottling: !HIDDEN },
   });
   void main.loadFile(path.join(__dirname, "renderer", "index.html"), { query: { view: "app", ...(tab ? { tab } : {}) } });
   main.once("ready-to-show", () => {
+    if (HIDDEN) return;
     main?.show();
     if (!E2E) app.dock?.show();
   });
@@ -529,7 +542,9 @@ function refreshTray(): void {
 }
 
 app.whenReady().then(async () => {
-  if (!E2E) app.dock?.hide();
+  // Hidden e2e runs stay out of the Dock and the app switcher, so they never take focus.
+  if (!E2E || HIDDEN) app.dock?.hide();
+  if (HIDDEN) app.setActivationPolicy("accessory");
   settings = await loadSettings().catch(() => Settings.parse({}));
   nativeTheme.themeSource = settings.theme;
   const found = E2E ? undefined : await findInLoginShell("claude");
