@@ -60,7 +60,7 @@ test("The translate shortcut shows the selected text in PT-BR and copies it", as
   const args = claudeCalls(l).at(-1)!.args;
   expect(args[args.indexOf("--tools") + 1]).toBe("");
   await l.panel.getByTestId("panel-paste").click();
-  expect(await l.app.evaluate(({ clipboard }) => clipboard.readText())).toBe("[pt-BR] Can we move the release to Monday?");
+  expect(await l.main.evaluate(() => (window as any).saru.testClipboard())).toBe("[pt-BR] Can we move the release to Monday?");
 });
 
 test("An empty selection says so instead of calling Claude", async () => {

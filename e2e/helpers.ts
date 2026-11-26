@@ -124,8 +124,11 @@ export async function close(l: Launched | undefined): Promise<void> {
     await l.main.screenshot({ path: path.join(shots, `${name}--app.png`) }).catch(() => undefined);
     if (l.panelUsed) await l.panel.screenshot({ path: path.join(shots, `${name}--panel.png`) }).catch(() => undefined);
   }
+  // The suite runs on the developer's own Mac: no window may show up or take focus.
+  const shown = process.env.SARU_E2E_SHOW === "1" ? 0 : await l.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().filter((w) => w.isVisible() || w.isFocused()).length).catch(() => 0);
   const videos = [l.main.video(), l.panelUsed ? l.panel.video() : null];
   await l.app.close();
+  expect(shown, "a Saru window became visible or focused during a hidden e2e run").toBe(0);
   if (process.env.SARU_RECORD !== "1") return;
   const roles = ["App window", "Panel"];
   for (const [i, v] of videos.entries()) {

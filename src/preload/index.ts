@@ -49,6 +49,7 @@ const api: SaruApi = {
 if (process.argv.includes("--saru-e2e")) {
   api.testTrigger = invoke("test:trigger") as NonNullable<SaruApi["testTrigger"]>;
   api.testTranslate = invoke("test:translate") as NonNullable<SaruApi["testTranslate"]>;
+  api.testClipboard = invoke("test:clipboard") as NonNullable<SaruApi["testClipboard"]>;
 }
 
 contextBridge.exposeInMainWorld("saru", api);

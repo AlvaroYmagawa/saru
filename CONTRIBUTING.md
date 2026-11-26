@@ -5,7 +5,8 @@ Thanks for helping. Saru is small on purpose: a menu-bar app, a folder of notes,
 - **Before a big change**, open an issue to talk it through.
 - **Setup:** `bun install`, then `bun run check` and `bun run e2e` should pass before and after
   your change. The e2e tests drive the real app with a stand-in for `claude`, so they need no
-  account.
+  account. They keep every window hidden and never touch your clipboard, so you can keep working
+  while they run; `SARU_E2E_SHOW=1 bun run e2e` shows the windows when you need to watch one.
 - **No real people in the repo.** Tests, fixtures and screenshots use made-up people (Hana Mori,
   Acme). Never commit someone's real name, email or Slack/Notion id.
 - **How Saru writes** lives in `plugin/skills/polish/references/rules.md`, shared by the app and
